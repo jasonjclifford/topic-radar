@@ -381,6 +381,14 @@ async def test_the_summary_section_is_left_out_when_there_is_no_summary(render):
     assert "## In 30 seconds" not in report and "## Top stories" in report
 
 
+async def test_a_filter_reason_the_report_does_not_recognise_is_escaped_not_linked(render):
+    item = make_item("Odd", "https://e.test/o", "filtered", relevance=3, reason="[x](javascript:alert(1))")
+    section = render(state_with(item, written=Written())).split("## Filtered out")[1].split("## Run health")[0]
+    assert LINK.findall(section) == []
+    assert not re.search(r"(?<!\\)\]\(", section)  # no unescaped ]( that could open a link target
+    assert "x" in section
+
+
 def test_a_malformed_settings_file_exits_2_naming_the_file_with_no_traceback_or_run_folder(site, tmp_path, monkeypatch):
     h = Harness(tmp_path / "radar", site, monkeypatch)
     (h.folder / "settings.yaml").write_text("model: [unclosed\n")

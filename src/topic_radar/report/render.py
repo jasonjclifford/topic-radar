@@ -83,7 +83,7 @@ def filter_reason(item: Item) -> str:
         return "not related to your interests (scored 0)"
     if item.relevance == 1:
         return "barely related to your interests (scored 1)"
-    return item.reason or "no reason recorded"
+    return escape(item.reason) or "no reason recorded"
 
 
 def _filtered_counts(state: RunState) -> list[tuple[str, int]]:
