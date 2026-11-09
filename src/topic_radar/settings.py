@@ -1,5 +1,6 @@
 from dataclasses import dataclass, fields, replace
 from pathlib import Path
+from typing import Callable, NamedTuple
 
 from ruamel.yaml import YAML
 from ruamel.yaml.error import MarkedYAMLError
@@ -19,6 +20,22 @@ class Settings:
     request_delay_seconds: float = 1
     timeout_seconds: float = 30
     known_ideas_max: int = 80
+
+
+class _Type(NamedTuple):
+    words: str
+    accepts: Callable[[object], bool]
+
+
+def _is_number(v) -> bool:
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+
+_EXPECTED = {
+    "str": _Type("text", lambda v: isinstance(v, str)),
+    "int": _Type("a whole number", lambda v: isinstance(v, int) and not isinstance(v, bool)),
+    "float": _Type("a number", _is_number),
+}
 
 
 class SettingsError(Exception):
@@ -44,5 +61,11 @@ def load_settings(folder: Path) -> Settings:
     if not isinstance(data, dict):
         raise SettingsError(f"{path.name}: expected a list of fields such as model. Fix it or delete the file to "
                             "use the defaults.")
-    known = {f.name for f in fields(Settings)}
-    return replace(Settings(), **{k: v for k, v in data.items() if k in known})
+    known = {f.name: f for f in fields(Settings)}
+    values = {k: v for k, v in data.items() if k in known}
+    for name, value in values.items():
+        expected = _EXPECTED[known[name].type if isinstance(known[name].type, str) else known[name].type.__name__]
+        if not expected.accepts(value):
+            raise SettingsError(f"{path.name}: {name} must be {expected.words}, not {value!r}. Fix it or delete the "
+                                "line to use the default.")
+    return replace(Settings(), **values)

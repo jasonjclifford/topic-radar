@@ -231,6 +231,23 @@ def test_a_bad_watch_file_exits_2_with_the_loaders_message(h):
     assert h.site.requests == [] and not (h.folder / "runs").exists()
 
 
+def test_a_watch_file_that_is_not_utf8_exits_2_naming_the_file(h):
+    (h.folder / "watches" / "latin.yaml").write_bytes("name: Caf\xe9\ninterests: x\n".encode("latin-1"))
+    result = h.run("latin")
+    assert result.exit_code == 2
+    assert "latin.yaml" in result.output and "UTF-8" in result.output and "Traceback" not in result.output
+    assert h.site.requests == [] and not (h.folder / "runs").exists()
+
+
+def test_a_settings_value_of_the_wrong_type_exits_2_naming_the_field_and_type(site, tmp_path, monkeypatch):
+    h = Harness(tmp_path / "radar", site, monkeypatch)
+    (h.folder / "settings.yaml").write_text("read_cap: \"5\"\n")
+    result = h.run()
+    assert result.exit_code == 2
+    assert "read_cap" in result.output and "whole number" in result.output and "Traceback" not in result.output
+    assert not (h.folder / "runs").exists()
+
+
 def test_a_watch_name_cannot_reach_outside_the_watches_folder(h):
     (h.folder / "outside.yaml").write_text("name: X\ninterests: y\n")
     result = h.run("../outside")

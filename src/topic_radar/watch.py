@@ -32,6 +32,8 @@ def load_watch(path: Path) -> Watch | str:
     path = Path(path)
     try:
         data = YAML(typ="safe").load(path.read_text(encoding="utf-8"))
+    except UnicodeDecodeError:
+        return f"{path.name}: not saved as UTF-8 text, so it can't be read. Skipped."
     except MarkedYAMLError as e:
         mark = e.problem_mark or e.context_mark
         where = f"line {mark.line + 1}" if mark else "unknown line"
@@ -56,7 +58,10 @@ def load_watch(path: Path) -> Watch | str:
     known = _bullets(str(data.get("already_know") or ""))
     known_file = path.parent.parent / "known" / f"{path.stem}.md"
     if known_file.exists():
-        known += _bullets(known_file.read_text(encoding="utf-8"))
+        try:
+            known += _bullets(known_file.read_text(encoding="utf-8"))
+        except UnicodeDecodeError:
+            return f"{known_file.name}: not saved as UTF-8 text, so it can't be read (it belongs to {path.name}). Skipped."
 
     return Watch(
         name=str(data["name"]),

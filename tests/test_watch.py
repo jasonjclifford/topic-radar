@@ -99,3 +99,18 @@ def test_known_file_alone_supplies_ideas_without_already_know(tmp_path):
     (tmp_path / "known").mkdir()
     (tmp_path / "known" / "demo.md").write_text("- Only learned.\n", encoding="utf-8")
     assert load_watch(p).known_ideas == ["Only learned."]
+
+
+def test_a_watch_file_that_is_not_utf8_is_skipped_naming_the_file(tmp_path):
+    p = write(tmp_path, "latin", "x")
+    p.write_bytes("name: Caf\xe9\ninterests: x\n".encode("latin-1"))
+    msg = load_watch(p)
+    assert isinstance(msg, str) and "latin.yaml" in msg and "UTF-8" in msg
+
+
+def test_a_known_ideas_file_that_is_not_utf8_is_skipped_naming_that_file(tmp_path):
+    p = write(tmp_path, "demo", MIN)
+    (tmp_path / "known").mkdir()
+    (tmp_path / "known" / "demo.md").write_bytes("- caf\xe9\n".encode("latin-1"))
+    msg = load_watch(p)
+    assert isinstance(msg, str) and "demo.md" in msg and "UTF-8" in msg
