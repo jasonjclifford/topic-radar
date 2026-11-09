@@ -116,11 +116,50 @@ async def test_a_number_found_in_a_quote_or_claim_keeps_the_story_and_a_failing_
     assert state.written.number_check_failures == 1
 
 
+async def test_when_every_top_story_is_a_fallback_the_missing_summary_is_explained(setup):
+    top = make_top()
+    model = ScriptedModel().on("write", top[0].items[0].title, "not json at all")
+    ctx, state = setup(model, [top])
+    await write(ctx, state)
+    assert state.written.summary is None and not state.written.summary_failed
+    assert any("30 seconds" in line for line in state.written.health)
+    report = render_report(ctx, state)
+    assert "## In 30 seconds" not in report and "\"In 30 seconds\"" in report
+
+
+async def test_with_no_top_stories_no_summary_line_is_added(setup):
+    ctx, state = setup(ScriptedModel(), [], quicks=[make_quick("Only a quick hit", "words", 1)])
+    await write(ctx, state)
+    assert state.written.health == []
+
+
 async def test_a_number_that_is_only_part_of_a_longer_claim_number_does_not_pass(setup):
     top = make_top(claims=(Claim("Cedar 3.0 has 400 users.", "Cedar 3.0 is used by 400 users today.", True),))
     model = good_model(top)
     model.rules.clear()
     model.on("write", top[0].items[0].title, story_answer(what_happened="It has 40 users.")).on("summary", "", {"bullets": ["x"]})
+    ctx, state = setup(model, [top])
+    await write(ctx, state)
+    assert state.written.top[0].fallback
+
+
+@pytest.mark.parametrize("claim_text, quote, written", [
+    ("Cedar 3.0 cuts build time by 40%.", "Builds are 40% faster in Cedar 3.0.", "Builds got 40 times faster."),
+    ("Cedar 3.0 cuts build time by 40.", "Builds are 40 faster in Cedar 3.0.", "Builds got 40% faster."),
+    ("Cedar has 1200 users.", "Cedar has 1200 users today.", "Cedar has 1,200 users."),
+    ("Cedar has 1,200 users.", "Cedar has 1,200 users today.", "Cedar has 1200 users."),
+])
+async def test_a_number_matches_its_claim_without_its_percent_sign_or_thousands_comma(setup, claim_text, quote, written):
+    top = make_top(claims=(Claim(claim_text, quote, True),))
+    model = ScriptedModel().on("write", top[0].items[0].title, story_answer(headline="Cedar ships", what_happened=written, takeaway="Cedar is faster.")).on("summary", "", {"bullets": ["x"]})
+    ctx, state = setup(model, [top])
+    await write(ctx, state)
+    assert not state.written.top[0].fallback and state.written.number_check_failures == 0
+
+
+async def test_a_percent_or_comma_does_not_make_a_different_number_pass(setup):
+    top = make_top(claims=(Claim("Cedar has 400 users.", "Cedar has 400% growth, 1,200 users.", True),))
+    model = ScriptedModel().on("write", top[0].items[0].title, story_answer(headline="Cedar ships", what_happened="Cedar has 40% growth and 120 users.", takeaway="Cedar is faster.")).on("summary", "", {"bullets": ["x"]})
     ctx, state = setup(model, [top])
     await write(ctx, state)
     assert state.written.top[0].fallback

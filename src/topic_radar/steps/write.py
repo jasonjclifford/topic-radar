@@ -39,7 +39,8 @@ def strip_addresses(text: str) -> str:
 
 
 def _numbers(text: str) -> set[str]:
-    return {m.group().rstrip(".,") for m in _NUMBER.finditer(text)} - {""}
+    """The numbers in the text as bare digits: a trailing full stop, a `%` and thousands commas are not part of one."""
+    return {m.group().replace("%", "").replace(",", "").rstrip(".") for m in _NUMBER.finditer(text)} - {""}
 
 
 def _passes_number_check(texts: list[str], claims: list[Claim]) -> bool:
@@ -95,6 +96,10 @@ def _story_text(w: WrittenStory) -> str:
 async def _summarize(ctx, out: Written) -> None:
     texts = [_story_text(w) for w in out.top if not w.fallback]
     if not texts:
+        if out.top:
+            line = "Every top story is shown as its headline and quoted claims, so the \"In 30 seconds\" section is left out."
+            out.health.append(line)
+            ctx.run_folder.note(line)
         return
     block = neutralize("\n\n".join(texts), tags=("stories", "article", "items", "chunk"))
     prompt = load_prompt("summary", stories=block)
