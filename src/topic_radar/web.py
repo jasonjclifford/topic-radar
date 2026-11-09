@@ -10,6 +10,7 @@ import httpx
 
 MAX_BYTES = 5 * 1024 * 1024
 MAX_HOPS = 5
+DEADLINE_SECONDS = 60  # the whole fetch, redirects and body included; the per-operation timeout is settings.timeout_seconds
 _TRACKING = {"fbclid", "gclid", "mc_cid", "mc_eid"}
 _XML_TYPES = {"text/xml", "application/xml", "application/rss+xml", "application/atom+xml",
               "application/rdf+xml", "application/xhtml+xml"}
@@ -107,7 +108,10 @@ def is_parseable_address(url: str) -> bool:
 async def fetch(ctx, url: str, *, method: str = "GET") -> Fetched:
     """Fetch one address under the guard, following redirects by hand. Raises FetchError."""
     try:
-        return await _fetch(ctx, url, method)
+        async with asyncio.timeout(DEADLINE_SECONDS):
+            return await _fetch(ctx, url, method)
+    except TimeoutError:
+        raise FetchError(f"the whole answer did not arrive within {DEADLINE_SECONDS:g} seconds") from None
     except (ValueError, httpx.InvalidURL):  # a bad port or bracket in the address, or in a redirect's Location
         raise FetchError("the address is not a valid web address") from None
 

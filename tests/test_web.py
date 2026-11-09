@@ -186,3 +186,13 @@ async def test_a_header_charset_that_is_not_a_text_codec_still_decodes_as_utf8(s
     site.pages["/p"] = (f"text/html; charset={charset}", "caf\u00e9 ok".encode())
     got = await fetch(make_ctx(), site.url("/p"))
     assert got.text == "caf\u00e9 ok"
+
+
+async def test_a_body_that_trickles_past_the_total_deadline_is_a_fetch_error_naming_the_deadline(site, make_ctx, monkeypatch):
+    monkeypatch.setattr("topic_radar.web.DEADLINE_SECONDS", 1)
+    started = time.monotonic()
+    with pytest.raises(FetchError) as err:
+        await fetch(make_ctx(timeout_seconds=5), site.url("/drip"))
+    assert "within 1 second" in err.value.reason
+    assert err.value.refused is False
+    assert time.monotonic() - started < 3

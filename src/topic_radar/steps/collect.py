@@ -22,6 +22,8 @@ async def collect(ctx, state: RunState) -> RunState:
             state.failed_sources.append(FailedSource(seed, reason))
             ctx.run_folder.note(f"Couldn't read {seed}: {reason}.")
             continue
+        for line in result.notes:
+            ctx.run_folder.note(line)
         state.items.extend(result.items)
         state.feed_titles[seed] = result.title
     read = len(state.feed_titles)

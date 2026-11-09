@@ -1,8 +1,9 @@
-from datetime import timezone
+from datetime import timedelta, timezone
 
 import pytest
 
 from topic_radar.state import RunState
+from conftest import NOW
 from topic_radar.steps.collect import collect
 
 NEWS_TITLES = ["Dock repairs finish", "New ferry timetable"]
@@ -120,3 +121,48 @@ async def test_an_unexpected_error_in_one_seed_fails_that_seed_and_the_others_st
     assert "unexpected" in state.failed_sources[0].reason
     assert [i.title for i in state.items] == NEWS_TITLES
     assert "RuntimeError: boom" in (ctx.run_folder.details / "error.txt").read_text(encoding="utf-8")
+
+
+async def test_a_slow_drip_feed_fails_on_the_deadline_and_the_other_seeds_still_yield(site, make_ctx, monkeypatch):
+    monkeypatch.setattr("topic_radar.web.DEADLINE_SECONDS", 1)
+    drip = site.url("/drip")
+    ctx = make_ctx(seeds=[drip, site.url("/feeds/news.atom")], timeout_seconds=5)
+    state = await collect(ctx, RunState())
+    assert [f.source for f in state.failed_sources] == [drip]
+    assert "within 1 second" in state.failed_sources[0].reason
+    assert [i.title for i in state.items] == NEWS_TITLES
+
+
+def _entries(n):
+    # Post 1 is the newest; published a minute apart
+    return "".join(
+        f"<item><title>Post {i}</title><link>http://127.0.0.1/p{i}</link>"
+        f"<pubDate>{(NOW - timedelta(minutes=i)).strftime('%a, %d %b %Y %H:%M:%S GMT')}</pubDate></item>"
+        for i in range(n, 0, -1))  # oldest first, so the cap must pick by date, not by position
+
+
+def _feed(n):
+    return ("application/rss+xml",
+            f"<?xml version='1.0'?><rss version='2.0'><channel><title>Big</title>{_entries(n)}</channel></rss>".encode())
+
+
+async def test_a_feed_with_250_entries_yields_the_200_newest_and_says_so_in_the_notes(site, make_ctx):
+    site.pages["/big"] = _feed(250)
+    lines = []
+    ctx = make_ctx(seeds=[site.url("/big")])
+    ctx.run_folder.echo = lines.append
+    state = await collect(ctx, RunState())
+    titles = {i.title for i in state.items}
+    assert len(state.items) == 200
+    assert "Post 1" in titles and "Post 200" in titles and "Post 201" not in titles
+    assert any("250" in line and "200" in line and site.url("/big") in line for line in lines)
+
+
+async def test_a_feed_at_the_cap_is_not_noted(site, make_ctx):
+    site.pages["/big"] = _feed(200)
+    lines = []
+    ctx = make_ctx(seeds=[site.url("/big")])
+    ctx.run_folder.echo = lines.append
+    state = await collect(ctx, RunState())
+    assert len(state.items) == 200
+    assert not any("newest" in line for line in lines)

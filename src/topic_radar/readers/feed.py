@@ -12,6 +12,8 @@ from .base import CollectResult
 
 _BLOCKS = {"p", "div", "br", "li", "ul", "ol", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "blockquote",
            "tr", "table", "hr"}
+MAX_ENTRIES = 200  # per feed; the newest by date
+_OLDEST = datetime.min.replace(tzinfo=timezone.utc)
 _PAGE_ERROR = ("this address is a web page, not a feed: replace it with the feed's address "
                "or remove it from seeds")
 
@@ -63,7 +65,12 @@ async def collect(ctx, source: str) -> CollectResult:
             raise FetchError(_PAGE_ERROR)
         raise FetchError("this address could not be read as a feed")
     items = []
-    for entry in parsed.entries:
+    notes = []
+    entries = parsed.entries
+    if len(entries) > MAX_ENTRIES:
+        entries = sorted(entries, key=lambda e: _published(e) or _OLDEST, reverse=True)[:MAX_ENTRIES]
+        notes.append(f"{source} has {len(parsed.entries)} entries; only the {MAX_ENTRIES} newest are used.")
+    for entry in entries:
         link = entry.get("link")
         if not link:
             continue
@@ -82,4 +89,4 @@ async def collect(ctx, source: str) -> CollectResult:
             summary=plain_text(entry.get("summary", "")),
             notes=content,
         ))
-    return CollectResult(items=items, title=plain_text(parsed.feed.get("title", "")))
+    return CollectResult(items=items, title=plain_text(parsed.feed.get("title", "")), notes=notes)
