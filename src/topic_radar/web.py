@@ -62,6 +62,25 @@ def _refuse(reason: str) -> FetchError:
     return FetchError(f"refused: {reason}", refused=True)
 
 
+_NAT64 = ipaddress.ip_network("64:ff9b::/96")
+_SITE_LOCAL = ipaddress.ip_network("fec0::/10")
+
+
+def is_refused_address(ip, allow_loopback: bool) -> bool:
+    """True for an address the fetch guard will not connect to: anything not public, multicast, deprecated
+    site-local, and an IPv4 address hidden in an IPv4-mapped or NAT64 IPv6 one is judged as that IPv4 address."""
+    if ip.version == 6:
+        if ip.ipv4_mapped:
+            ip = ip.ipv4_mapped
+        elif ip in _NAT64:
+            ip = ipaddress.IPv4Address(int(ip) & 0xFFFFFFFF)
+        elif ip in _SITE_LOCAL:
+            return True
+    if ip.is_loopback and allow_loopback:
+        return False
+    return ip.is_multicast or not ip.is_global
+
+
 async def _check_host(ctx, url: str) -> None:
     parts = urlsplit(url)
     if parts.scheme not in ("http", "https"):
@@ -74,12 +93,7 @@ async def _check_host(ctx, url: str) -> None:
     except OSError:
         raise FetchError(f"the name {host} could not be found") from None
     for info in infos:
-        ip = ipaddress.ip_address(info[4][0].split("%")[0])
-        if ip.version == 6 and ip.ipv4_mapped:
-            ip = ip.ipv4_mapped
-        if ip.is_loopback and ctx.allow_loopback:
-            continue
-        if not ip.is_global:
+        if is_refused_address(ipaddress.ip_address(info[4][0].split("%")[0]), ctx.allow_loopback):
             raise _refuse(f"{host} is a private or local network address")
 
 

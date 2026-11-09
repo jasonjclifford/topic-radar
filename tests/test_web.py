@@ -1,9 +1,10 @@
+import ipaddress
 import time
 from urllib.parse import quote
 
 import pytest
 
-from topic_radar.web import FetchError, fetch, normalize_address
+from topic_radar.web import FetchError, fetch, is_refused_address, normalize_address
 
 MB5 = 5 * 1024 * 1024
 
@@ -196,3 +197,25 @@ async def test_a_body_that_trickles_past_the_total_deadline_is_a_fetch_error_nam
     assert "within 1 second" in err.value.reason
     assert err.value.refused is False
     assert time.monotonic() - started < 3
+
+
+@pytest.mark.parametrize("address", [
+    "224.0.0.1", "239.255.255.250", "ff02::1", "ff0e::1234",  # multicast
+    "64:ff9b::7f00:1", "64:ff9b::a00:1", "64:ff9b::c0a8:1", "64:ff9b::a9fe:a9fe",  # NAT64 around loopback, private, link-local
+    "fec0::1", "feff::1",  # deprecated site-local
+    "10.0.0.1", "169.254.169.254", "::1", "fe80::1", "fd00::1",  # the earlier rules still hold
+])
+def test_a_non_public_address_is_refused(address):
+    assert is_refused_address(ipaddress.ip_address(address), allow_loopback=False)
+
+
+@pytest.mark.parametrize("address", ["8.8.8.8", "2001:4860:4860::8888", "64:ff9b::808:808", "::ffff:8.8.8.8"])
+def test_a_public_address_is_not_refused_even_through_nat64_or_mapping(address):
+    assert not is_refused_address(ipaddress.ip_address(address), allow_loopback=False)
+
+
+def test_loopback_is_allowed_only_when_the_flag_says_so():
+    ip = ipaddress.ip_address("127.0.0.1")
+    assert not is_refused_address(ip, allow_loopback=True)
+    assert is_refused_address(ip, allow_loopback=False)
+    assert is_refused_address(ipaddress.ip_address("224.0.0.1"), allow_loopback=True)
