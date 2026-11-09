@@ -1,6 +1,6 @@
 import re
 from calendar import timegm
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from html.parser import HTMLParser
 from urllib.parse import urljoin
 
@@ -14,6 +14,7 @@ from .base import CollectResult
 _BLOCKS = {"p", "div", "br", "li", "ul", "ol", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "blockquote",
            "tr", "table", "hr"}
 MAX_ENTRIES = 200  # per feed; the newest by date
+_EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
 _OLDEST = datetime.min.replace(tzinfo=timezone.utc)
 _PAGE_ERROR = ("this address is a web page, not a feed: replace it with the feed's address "
                "or remove it from seeds")
@@ -53,7 +54,12 @@ def plain_text(markup: str) -> str:
 
 def _published(entry) -> datetime | None:
     stamp = entry.get("published_parsed") or entry.get("updated_parsed")
-    return datetime.fromtimestamp(timegm(stamp), tz=timezone.utc) if stamp else None
+    if not stamp:
+        return None
+    try:  # not fromtimestamp: that raises OSError on Windows for dates before 1970
+        return _EPOCH + timedelta(seconds=timegm(stamp))
+    except (OverflowError, ValueError):
+        return None
 
 
 async def collect(ctx, source: str) -> CollectResult:

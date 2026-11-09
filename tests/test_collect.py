@@ -177,3 +177,36 @@ async def test_control_characters_in_feed_text_are_removed_from_the_items(site, 
     (item,) = state.items
     assert item.title == "Ti]0;PWNEDtle" and item.summary == "desc x"
     assert state.feed_titles[site.url("/c")] == "Fe[31med"
+
+
+def _dated(year):
+    return ("application/rss+xml",
+            ("<?xml version='1.0'?><rss version='2.0'><channel><title>Old</title>"
+             f"<item><title>Old post</title><link>http://127.0.0.1/old</link><pubDate>Mon, 01 Jan {year} 00:00:00 GMT</pubDate></item>"
+             "</channel></rss>").encode())
+
+
+async def test_an_entry_dated_1900_keeps_its_date_even_where_the_platform_rejects_negative_timestamps(site, make_ctx, monkeypatch):
+    from datetime import datetime
+
+    class NoNegativeStamps(datetime):  # what Windows does: fromtimestamp raises OSError before 1970
+        @classmethod
+        def fromtimestamp(cls, ts, tz=None):
+            if ts < 0:
+                raise OSError("Invalid argument")
+            return super().fromtimestamp(ts, tz)
+
+    monkeypatch.setattr("topic_radar.readers.feed.datetime", NoNegativeStamps)
+    site.pages["/old"] = _dated(1900)
+    state = await collect(make_ctx(seeds=[site.url("/old")]), RunState())
+    (item,) = state.items
+    assert item.published.isoformat() == "1900-01-01T00:00:00+00:00"
+
+
+async def test_an_entry_dated_beyond_the_calendar_is_undated_rather_than_a_crash(site, make_ctx):
+    site.pages["/far"] = _dated(9999)
+    state = await collect(make_ctx(seeds=[site.url("/far")]), RunState())
+    assert state.items[0].published.year == 9999  # the last representable year still dates
+
+    from topic_radar.readers.feed import _published
+    assert _published({"published_parsed": (10000, 1, 1, 0, 0, 0, 0, 1, 0)}) is None
