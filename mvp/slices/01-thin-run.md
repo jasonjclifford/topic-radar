@@ -89,6 +89,32 @@ v3 is kept because v4 and v5 add words and no recall. The two facts still missed
 
 **Finding (fixed in the commit "quote check reads Markdown escapes as plain characters"):** `trafilatura`'s Markdown output escapes underscores (`max_tool_calls` arrives as `max\_tool\_calls`), the model copies the unescaped identifier, and the quote check then drops a correct claim. In the probe this costs one claim in every version. `text.normalize_quote` now treats a backslash escape of Markdown punctuation as the plain character.
 
+## Real run (real feeds, read cap 3)
+
+Run on 2026-11-09 at 07:32 local, `examples/watches/ai-engineering.yaml` copied into a scratch Topic Radar folder outside the repository, `topic-radar run ai-engineering --folder <scratch> --read-cap 3`, default model `gemma4:e4b-mlx`.
+
+- **Outcome:** exit 0, `report.md`, `notes.md` ending "Done.", `items.csv`, `articles/` and `details/` (27 prompt/answer pairs: 17 triage, 7 read, 2 write, 1 summary; plus `events.jsonl`). Wall clock 6 min 18 s: collecting 2 min 23 s, triage 2 min 39 s (17 batches), reading 1 min 1 s, writing and summary 14 s.
+- **Sources:** 13 of 17 seeds read. The 4 that failed are web pages, not feeds (two blog index pages, a changelog label page, a news page); the report opened with the banner and Run health named each one. The seeds need their feed addresses (or a later slice's discovery).
+- **Items:** 169 new items: 2 top stories, 15 quick hits, 151 filtered (85 scored 0, 26 scored 1, 40 not in the top picks), 1 failed (the site answered 403 to the article fetch).
+- **Top stories, checked against their article files:** S1 (agent-written PR descriptions hidden behind `<details>`) has 5 kept claims, 0 dropped, and its text matches them. S2 (a 284B model on 64 GB of RAM, no GPU) has 10 kept claims and 24 dropped; every number in its text is in its claims.
+- **Quote drops:** the 24 dropped on S2 came from a README of HTML stat blocks and Markdown tables; the model stitched quotes across cells and tags (`56.56 GiB <sub>…</div>`, `name | value`) that aren't contiguous in the extracted text. The check did its job; the cost is recall on table-heavy pages.
+- **What the report showed that the tests didn't:**
+  - Collecting printed nothing for over 2 minutes, and failed sources were only noted at the end (fixed in "progress lines while collecting; one remedy per failed source").
+  - Each failed-source Run health line repeated its remedy (fixed in the same commit).
+  - Hacker News feed summaries are boilerplate ("Article URL: … Comments URL: … Points: …"), so those quick-hit lines say little, and the escaped addresses in them read as `https:\//…`.
+  - Several quick hits are model launches or framework marketing that the watch's interests arguably don't want (judged by eye; tuning triage is outside this slice).
+
+## Notes for the spec
+
+Places where building this slice settled something the spec or plan leaves open. The spec's text is unchanged; each is a candidate edit.
+
+- **AC14:** "at most `chunk_chars`" and "never inside a line" can't both hold for a single line longer than `chunk_chars`. The code keeps the line whole, as its own oversize chunk.
+- **AC46:** the plan's version-title pattern `^v?\d+(\.\d+)+\b` matches a blog post titled "2.0 thoughts", so the code requires the version to be the whole title or to be followed by `:` (with an optional `-rc1`-style suffix).
+- **AC44:** "repeats: <idea n>" is read as the idea's text, not its number.
+- **AC15:** quotes are checked against the chunk they came from, as the AC says (`architecture.md` says "the text"). The check also reads Markdown backslash escapes as the plain character.
+- **Primary case:** 4 of the AI engineering watch's 17 seeds are web pages, not feeds (see Real run).
+- **AC50:** the 30-second summary's bullets aren't number-checked; the AC names top-story text only.
+
 ## Deferred
 
 `init`, cursors, history, conditional requests, broken sources, end-of-run state writes, feedback, profiles, `find`, `doctor`, `open`, HTML report, `report.json`, `sources.csv`, `model: auto`.
