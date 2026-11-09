@@ -7,7 +7,7 @@ from functools import partial
 import pytest
 from typer.testing import CliRunner
 
-from topic_radar import cli, pipeline
+from topic_radar import cli, pipeline, rank
 from topic_radar.model.ollama import PreflightError
 from topic_radar.model.scripted import ScriptedModel
 from topic_radar.report.render import render_report
@@ -385,8 +385,8 @@ async def test_filtered_out_counts_items_by_reason_and_names_items_csv(render):
 async def test_run_health_lists_every_kind_of_problem_with_counts(render):
     items = [make_item("A", "https://e.test/a", "not scored"), make_item("B", "https://e.test/b", "not scored"),
              make_item("C", "https://e.test/c", "failed", reason="no answer"),
-             make_item("D", "https://e.test/d", "quick hit", reason="over read cap", relevance=2),
-             make_item("E", "https://e.test/e", "quick hit", reason="over read cap", relevance=3)]
+             make_item("D", "https://e.test/d", "quick hit", reason="over read cap", relevance=2, unread_over_cap=True),
+             make_item("E", "https://e.test/e", "quick hit", reason="over read cap", relevance=3, unread_over_cap=True)]
     arts = [Article(item=items[0], dropped=2), Article(item=items[1], dropped=1)]
     written = Written(failed_writes=1, health=["The write call for S2 (X) failed, so it shows its headline."])
     failed = [FailedSource("https://down.test/feed", "no answer within 30 seconds")]
@@ -452,3 +452,19 @@ def test_malformed_item_links_never_stop_the_run(h):
     assert result.exit_code == 0, result.output
     assert "Cedar 3.0 ships a faster scheduler" in h.report()
     assert {r["title"] for r in h.rows()} == {"Cedar 3.0 announced", "Plain note"}
+
+
+async def test_run_health_counts_every_scored_item_the_read_step_did_not_read_even_when_picks_filtered_it(make_ctx, site):
+    from topic_radar.model.scripted import ScriptedModel
+    from topic_radar.steps.read import read
+    items = [make_item(f"Story {n}", site.url("/articles/quoted.html" if n == 0 else f"/never-read/{n}"),
+                       "quick hit", relevance=2, to_read=True, watch="ai") for n in range(19)]
+    ctx = make_ctx(read_cap=1)
+    ctx.model = ScriptedModel().on("read", "Story 0", {"claims": [{"claim": "Cedar is faster.", "quote": QUOTE}]})
+    state = state_with(*items)
+    await read(ctx, state)
+    rank.picks(state.stories)
+    assert sum(i.reason == "not in the top picks" for i in items) == 3  # over-cap stories that missed the quick hits
+    ctx.watch.name = "Build tooling"
+    health = render_report(ctx, state).split("## Run health")[1]
+    assert "1 article was read; 18 scored items were not read." in health

@@ -118,7 +118,7 @@ def _health(ctx, state: RunState) -> list[str]:
                      if dropped > 1 else "1 claim was dropped because its quote wasn't found in the article.")
     if state.written:
         lines += [escape(h) for h in state.written.health]
-    unread = sum(i.reason == "over read cap" for i in state.items)
+    unread = sum(i.unread_over_cap for i in state.items)
     lines.append(f"Read cap: {ctx.settings.read_cap}. {_count(len(state.articles), 'article')} "
                  f"{'was' if len(state.articles) == 1 else 'were'} read; "
                  f"{_count(unread, 'scored item')} {'was' if unread == 1 else 'were'} not read.")

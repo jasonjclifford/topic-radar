@@ -21,6 +21,7 @@ class Item:
     kind: str = ""  # triage's kind (paper, release, rule, guidance, news, opinion, marketing, other)
     to_read: bool = False  # triage scored it 2-3: the read step reads it, in rank.read_order
     eligible: bool = False  # the read step read it and kept at least one claim: it may be a top story
+    unread_over_cap: bool = False  # scored 2-3 but over the read cap, so never read; stays set whatever the picks decide later
     article: str = ""  # path of its saved article, relative to the run folder; empty when it wasn't read
 
     def __setattr__(self, name, value):
@@ -90,6 +91,7 @@ class WrittenStory:
     read_if: str = ""
     takeaway: str = ""
     claims: list[Claim] = field(default_factory=list)  # the kept claims, shown when `fallback`
+    unread_over_cap: bool = False  # scored 2-3 but over the read cap, so never read; stays set whatever the picks decide later
     article: str = ""  # path of the saved article, relative to the run folder
     fallback: bool = False  # headline (the feed title) and quoted claims only; the other fields are empty
     fallback_reason: str = ""  # "number check" or "write call failed"

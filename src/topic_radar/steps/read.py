@@ -26,10 +26,11 @@ class ReadFailed(Exception):
     """The article could not be read; the message is a plain sentence for the report."""
 
 
-def _mark(story: Story, decision: str, reason: str) -> None:
+def _mark(story: Story, decision: str, reason: str, *, unread: bool = False) -> None:
     for item in story.items:
         if item.to_read:
             item.decision, item.reason = decision, reason
+            item.unread_over_cap = unread
 
 
 async def _page_text(ctx, item: Item) -> str:
@@ -111,7 +112,7 @@ async def read(ctx, state: RunState) -> RunState:
     ordered = rank.read_order([s for s in state.stories if s.to_read])
     cap = ctx.settings.read_cap
     for story in ordered[cap:]:
-        _mark(story, "quick hit", "over read cap")
+        _mark(story, "quick hit", "over read cap", unread=True)
     todo = ordered[:cap]
     for number, story in enumerate(todo, 1):
         item = next(i for i in story.items if i.to_read)
