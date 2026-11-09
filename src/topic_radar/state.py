@@ -81,6 +81,46 @@ class FailedSource:
 
 
 @dataclass
+class WrittenStory:
+    id: str  # S1, S2, ... in report order
+    story: Story  # its items give the source links (item addresses only)
+    headline: str
+    what_happened: str = ""
+    why_it_matters: str = ""
+    read_if: str = ""
+    takeaway: str = ""
+    claims: list[Claim] = field(default_factory=list)  # the kept claims, shown when `fallback`
+    article: str = ""  # path of the saved article, relative to the run folder
+    fallback: bool = False  # headline (the feed title) and quoted claims only; the other fields are empty
+    fallback_reason: str = ""  # "number check" or "write call failed"
+
+
+@dataclass
+class QuickHit:
+    id: str  # Q1, Q2, ...
+    story: Story
+    title: str  # the feed title
+    summary: str  # the feed summary, trimmed
+    address: str
+    watch: str
+
+    @property
+    def line(self) -> str:
+        return f"{self.title}: {self.summary}" if self.summary else self.title
+
+
+@dataclass
+class Written:
+    top: list[WrittenStory] = field(default_factory=list)
+    quick: list[QuickHit] = field(default_factory=list)
+    summary: list[str] | None = None  # "In 30 seconds" bullets; None leaves the section out
+    failed_writes: int = 0  # story calls that failed (each gave the fallback)
+    number_check_failures: int = 0  # written stories replaced by the fallback
+    summary_failed: bool = False
+    health: list[str] = field(default_factory=list)  # plain Run health lines from this step
+
+
+@dataclass
 class RunState:
     items: list[Item] = field(default_factory=list)
     stories: list[Story] = field(default_factory=list)
@@ -88,3 +128,4 @@ class RunState:
     notes: list[str] = field(default_factory=list)
     failed_sources: list[FailedSource] = field(default_factory=list)
     feed_titles: dict[str, str] = field(default_factory=dict)  # feed address -> the feed's own title
+    written: Written | None = None  # set by the write step
