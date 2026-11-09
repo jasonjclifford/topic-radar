@@ -44,12 +44,11 @@ def _split(lines: list[str], path: list[str], limit: int) -> list[str]:
     pieces: list[str] = []
     piece: list[str] = []
     size = 0
-    started = False  # the first piece carries the heading itself, so it takes no prefix
     for line in lines:
         added = len(line) + (1 if piece else 0)
         if piece and size + added > limit:
             pieces.append("\n".join(piece).strip("\n"))
-            piece, size, started = list(prefix), len("\n".join(prefix)), True
+            piece, size = list(prefix), len("\n".join(prefix))
             if not line.strip():
                 continue
             added = len(line) + (1 if piece else 0)

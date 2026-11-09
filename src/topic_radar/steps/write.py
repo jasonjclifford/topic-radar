@@ -2,9 +2,8 @@ import re
 
 from .. import rank
 from ..model.answers import LenientModel
-from ..model.prompts import load_prompt, neutralize
+from ..model.prompts import clean, load_prompt, neutralize, profile
 from ..state import Article, Claim, QuickHit, RunState, Story, Written, WrittenStory
-from .triage import _clean
 
 QUICK_SUMMARY_CHARS = 200
 SUMMARY_BULLETS_MAX = 5
@@ -52,19 +51,12 @@ def _article(state: RunState, story: Story) -> Article | None:
     return next((a for a in state.articles if any(a.item is i for i in story.items)), None)
 
 
-def _profile(ctx) -> str:
-    profile = _clean(ctx.watch.interests)
-    if ctx.watch.not_interested.strip():
-        profile += "\nNot interested in: " + _clean(ctx.watch.not_interested)
-    return profile
-
-
 def _claims_block(claims: list[Claim]) -> str:
-    return "\n".join(f'{n}. {_clean(c.text)}\n   quote: "{_clean(c.quote)}"' for n, c in enumerate(claims, 1))
+    return "\n".join(f'{n}. {clean(c.text)}\n   quote: "{clean(c.quote)}"' for n, c in enumerate(claims, 1))
 
 
 def _fallback(sid: str, story: Story, art: Article | None, claims: list[Claim], reason: str) -> WrittenStory:
-    return WrittenStory(id=sid, story=story, headline=_clean(story.items[0].title), claims=claims,
+    return WrittenStory(id=sid, story=story, headline=clean(story.items[0].title), claims=claims,
                         article=art.item.article if art else "", fallback=True, fallback_reason=reason)
 
 
@@ -73,9 +65,9 @@ async def _write_story(ctx, state: RunState, out: Written, number: int, story: S
     art = _article(state, story)
     claims = [Claim(strip_addresses(c.text), c.quote, c.kept) for c in art.claims if c.kept] if art else []
     read_item = art.item if art else story.items[0]
-    title = _clean(read_item.title)
+    title = clean(read_item.title)
     ctx.run_folder.note(f"Writing {sid}: {title}")
-    prompt = load_prompt("write", profile=_profile(ctx), title=title, claims=_claims_block(claims))
+    prompt = load_prompt("write", profile=profile(ctx.watch), title=title, claims=_claims_block(claims))
     answer = await ctx.model.call("write", prompt.system, prompt.user, WriteAnswer)
     if answer.parsed is None:
         out.failed_writes += 1
@@ -121,10 +113,10 @@ async def _summarize(ctx, out: Written) -> None:
 
 def _quick_hit(number: int, story: Story) -> QuickHit:
     item = story.items[0]
-    summary = _clean(item.summary)
+    summary = clean(item.summary)
     if len(summary) > QUICK_SUMMARY_CHARS:
         summary = summary[:QUICK_SUMMARY_CHARS].rstrip() + "…"
-    return QuickHit(id=f"Q{number}", story=story, title=_clean(item.title), summary=summary,
+    return QuickHit(id=f"Q{number}", story=story, title=clean(item.title), summary=summary,
                     address=item.address, watch=story.watch)
 
 

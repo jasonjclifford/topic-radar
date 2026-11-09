@@ -1,7 +1,6 @@
 import csv
-from urllib.parse import urlsplit
 
-from ..report.render import render_report
+from ..report.render import render_report, source_name
 from ..state import RunState
 
 COLUMNS = ["watch", "source", "title", "address", "published", "new_or_update", "relevance", "kind", "reason",
@@ -28,8 +27,7 @@ def _report_ids(state: RunState) -> dict[int, str]:
 def _rows(state: RunState):
     ids = _report_ids(state)
     for item in state.items:
-        source = state.feed_titles.get(item.source) or urlsplit(item.source).netloc or item.source
-        yield [item.watch, source, item.title, item.address, item.published.isoformat() if item.published else "",
+        yield [item.watch, source_name(state, item), item.title, item.address, item.published.isoformat() if item.published else "",
                "new", "" if item.relevance is None else item.relevance, item.kind, item.reason, item.decision,
                ids.get(id(item), ""), item.article]
 

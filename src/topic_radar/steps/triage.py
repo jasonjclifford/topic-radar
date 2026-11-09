@@ -1,9 +1,5 @@
-import re
-
-from pydantic import BaseModel
-
 from ..model.answers import LenientModel
-from ..model.prompts import load_prompt, neutralize
+from ..model.prompts import clean, idea_numbered, known_ideas, load_prompt, numbered, profile
 from ..state import Item, RunState
 
 BATCH_SIZE = 10
@@ -26,21 +22,9 @@ class TriageAnswer(LenientModel):
     items: list[Verdict]
 
 
-def _clean(text: str) -> str:
-    return re.sub(r"\s+", " ", neutralize(text)).strip()
-
-
-def _known_ideas(ctx) -> list[str]:
-    return [_clean(idea) for idea in ctx.watch.known_ideas[: ctx.settings.known_ideas_max]]
-
-
 def _prompt(ctx, batch: list[Item], known: list[str]):
-    profile = _clean(ctx.watch.interests)
-    if ctx.watch.not_interested.strip():
-        profile += "\nNot interested in: " + _clean(ctx.watch.not_interested)
-    ideas = "\n".join(f"{n}. {idea}" for n, idea in enumerate(known, 1)) or "(none)"
-    rows = [f"[{n}] {_clean(item.title)}\n    {_clean(item.summary)[:SUMMARY_CHARS]}" for n, item in enumerate(batch, 1)]
-    return load_prompt("triage", profile=profile, known_ideas=ideas, items="\n".join(rows))
+    rows = [f"[{n}] {clean(item.title)}\n    {clean(item.summary)[:SUMMARY_CHARS]}" for n, item in enumerate(batch, 1)]
+    return load_prompt("triage", profile=profile(ctx.watch), known_ideas=numbered(known), items="\n".join(rows))
 
 
 def _fits(ctx, prompt) -> bool:
@@ -67,7 +51,7 @@ def _judge(item: Item, v: Verdict, known: list[str]) -> None:
     item.relevance = max(0, min(3, v.relevance))
     item.kind = v.kind.strip().lower() if v.kind.strip().lower() in KINDS else "other"
     reason = v.reason.strip()
-    idea = known[v.repeats_idea - 1] if v.repeats_idea and 1 <= v.repeats_idea <= len(known) else None
+    idea = idea_numbered(known, v.repeats_idea)
     if idea and not v.adds_new:
         item.decision, item.reason, item.to_read = "filtered", f"repeats: {idea}", False
         return
@@ -83,7 +67,7 @@ async def triage(ctx, state: RunState) -> RunState:
 
     An item scored 2-3 gets `to_read` and the decision `quick hit` (its fallback if never read);
     the read step reads the `to_read` stories in rank.read_order. Items without a score stay `not scored`."""
-    known = _known_ideas(ctx)
+    known = known_ideas(ctx)
     for item in state.items:
         item.watch = item.watch or ctx.watch.slug
     batches = _batches(ctx, state.items, known)

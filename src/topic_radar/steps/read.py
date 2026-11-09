@@ -2,11 +2,10 @@ import re
 
 from .. import rank
 from ..model.answers import LenientModel
-from ..model.prompts import load_prompt, neutralize
+from ..model.prompts import clean, idea_numbered, known_ideas, load_prompt, neutralize, numbered, profile
 from ..state import Article, Claim, Item, RunState, Story
 from ..text import chunk_text, extract_text, quote_found
 from ..web import FetchError, fetch
-from .triage import _clean, _known_ideas
 
 CLAIMS_PER_CHUNK = 12
 NAME_MAX = 80
@@ -47,11 +46,8 @@ async def _page_text(ctx, item: Item) -> str:
 
 
 def _prompt(ctx, item: Item, known: list[str], chunk: str):
-    profile = _clean(ctx.watch.interests)
-    if ctx.watch.not_interested.strip():
-        profile += "\nNot interested in: " + _clean(ctx.watch.not_interested)
-    ideas = "\n".join(f"{n}. {idea}" for n, idea in enumerate(known, 1)) or "(none)"
-    return load_prompt("read", profile=profile, known_ideas=ideas, title=_clean(item.title), chunk=neutralize(chunk).strip())
+    return load_prompt("read", profile=profile(ctx.watch), known_ideas=numbered(known), title=clean(item.title),
+                       chunk=neutralize(chunk).strip())
 
 
 def _file_name(number: int, title: str) -> str:
@@ -72,12 +68,12 @@ def _article_markdown(art: Article) -> str:
     return "\n".join(lines) + f"\n\n## Text\n\n{art.text}\n"
 
 
-async def _read_item(ctx, item: Item, known: list[str]) -> tuple[Article, int | None, bool]:
+async def _read_item(ctx, item: Item, known: list[str]) -> tuple[Article, str | None, bool]:
     """Fetch, extract, chunk and ask the model about each chunk. Returns the article, the known idea it
     repeats (if any chunk said so) and whether any chunk said it adds something new."""
     text = await _page_text(ctx, item)
     art = Article(item=item, text=text)
-    idea: int | None = None
+    idea: str | None = None
     adds_new = False
     for chunk in chunk_text(text, ctx.settings.chunk_chars, ctx.settings.max_chunks):
         prompt = _prompt(ctx, item, known, chunk)
@@ -90,9 +86,8 @@ async def _read_item(ctx, item: Item, known: list[str]) -> tuple[Article, int | 
             kept = quote_found(c.quote, chunk)
             art.claims.append(Claim(text=c.claim.strip(), quote=c.quote.strip(), kept=kept))
             art.dropped += not kept
-        n = answer.parsed.repeats_idea
-        if idea is None and n and 1 <= n <= len(known):
-            idea = n
+        if idea is None:
+            idea = idea_numbered(known, answer.parsed.repeats_idea)
         adds_new = adds_new or answer.parsed.adds_new
     return art, idea, adds_new
 
@@ -106,7 +101,7 @@ async def read(ctx, state: RunState) -> RunState:
     with at least one kept claim, `filtered` when the model says it repeats a known idea and adds nothing,
     and `failed` when the page or the model failed. Every to_read item of the story takes a failure or
     filter decision; an article is saved for each story that was read."""
-    known = _known_ideas(ctx)
+    known = known_ideas(ctx)
     ordered = rank.read_order([s for s in state.stories if s.to_read])
     cap = ctx.settings.read_cap
     for story in ordered[cap:]:
@@ -125,7 +120,7 @@ async def read(ctx, state: RunState) -> RunState:
         item.article = art.path
         state.articles.append(art)
         if idea is not None and not adds_new:
-            _mark(story, "filtered", f"repeats: {known[idea - 1]}")
+            _mark(story, "filtered", f"repeats: {idea}")
         else:
             item.eligible = any(c.kept for c in art.claims)
     return state

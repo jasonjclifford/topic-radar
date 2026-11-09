@@ -4,7 +4,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from scenario_support import KNOWN_IDEAS, SEED_PATHS, TITLES, WATCH, judge, run_scenarios, write_folder
+from scenario_support import KNOWN_IDEAS, TITLES, WATCH, judge, run_scenarios, write_folder
 
 from topic_radar.model.ollama import OllamaClient
 from topic_radar.state import Item

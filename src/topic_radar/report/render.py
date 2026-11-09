@@ -25,7 +25,8 @@ def _count(n: int, noun: str) -> str:
     return f"{n} {noun}" if n == 1 else f"{n} {noun}s"
 
 
-def _source_name(state: RunState, item: Item) -> str:
+def source_name(state: RunState, item: Item) -> str:
+    """The feed's own title for the item's source, else the source's host, else the source as given."""
     return state.feed_titles.get(item.source) or urlsplit(item.source).netloc or item.source
 
 
@@ -57,8 +58,8 @@ def _top_story(w: WrittenStory, state: RunState) -> list[str]:
             if value:
                 lines.append(f"**{label}:** {escape(value)}  ")
         lines.append("")
-    sources = [link(_source_name(state, i), i.address) if is_web_address(i.address)
-               else f"{escape(_source_name(state, i))} (no link: the address isn't a web address)"
+    sources = [link(source_name(state, i), i.address) if is_web_address(i.address)
+               else f"{escape(source_name(state, i))} (no link: the address isn't a web address)"
                for i in w.story.items]
     lines.append("Sources: " + " · ".join(sources) + "  ")
     if w.article:

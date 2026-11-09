@@ -2,7 +2,6 @@ from datetime import datetime, timezone
 
 import pytest
 
-from topic_radar.model.client import Answer
 from topic_radar.model.recording import RecordingClient
 from topic_radar.model.scripted import ScriptedModel
 from topic_radar.state import Article, Claim, Item, RunState, Story

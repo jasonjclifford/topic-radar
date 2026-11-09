@@ -125,7 +125,6 @@ class RunState:
     items: list[Item] = field(default_factory=list)
     stories: list[Story] = field(default_factory=list)
     articles: list[Article] = field(default_factory=list)
-    notes: list[str] = field(default_factory=list)
     failed_sources: list[FailedSource] = field(default_factory=list)
     feed_titles: dict[str, str] = field(default_factory=dict)  # feed address -> the feed's own title
     written: Written | None = None  # set by the write step

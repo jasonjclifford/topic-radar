@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from .settings import Settings
+from .store.runfolder import RunFolder
 from .watch import Watch
 
 
@@ -16,5 +17,5 @@ class RunContext:
     clock: Callable[[], datetime]  # returns timezone-aware now
     http: Any  # httpx.AsyncClient
     model: Any  # ModelClient
-    run_folder: Path
+    run_folder: RunFolder
     allow_loopback: bool = False  # test-only; never read from settings

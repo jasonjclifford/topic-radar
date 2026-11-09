@@ -1,5 +1,4 @@
 import json
-import os
 import sys
 from collections.abc import Callable
 from datetime import datetime

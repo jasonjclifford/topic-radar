@@ -6,7 +6,6 @@ from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import pytest
-from pydantic import BaseModel
 
 from topic_radar.model.answers import LenientModel, parse_answer
 from topic_radar.model.client import Answer

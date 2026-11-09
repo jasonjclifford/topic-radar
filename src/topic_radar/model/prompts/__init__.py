@@ -25,3 +25,31 @@ def neutralize(text: str, tags: tuple[str, ...] = _TAGS) -> str:
     the text can't close the block it sits in."""
     pattern = re.compile(r"<\s*(/?)\s*(" + "|".join(map(re.escape, tags)) + r")\b[^>]*>", re.IGNORECASE)
     return pattern.sub(lambda m: f"[{m.group(1)}{m.group(2).lower()}]", text)
+
+
+def clean(text: str) -> str:
+    """Text for one line of a prompt: delimiter tags neutralized, whitespace collapsed."""
+    return re.sub(r"\s+", " ", neutralize(text)).strip()
+
+
+def profile(watch) -> str:
+    """The profile in prompts: the watch's interests, then what it is not interested in when it says."""
+    text = clean(watch.interests)
+    if watch.not_interested.strip():
+        text += "\nNot interested in: " + clean(watch.not_interested)
+    return text
+
+
+def known_ideas(ctx) -> list[str]:
+    """The watch's known ideas, cleaned, up to the `known_ideas_max` setting."""
+    return [clean(idea) for idea in ctx.watch.known_ideas[: ctx.settings.known_ideas_max]]
+
+
+def numbered(ideas: list[str]) -> str:
+    """The known ideas as a numbered list (1-based, as the model refers to them), or "(none)"."""
+    return "\n".join(f"{n}. {idea}" for n, idea in enumerate(ideas, 1)) or "(none)"
+
+
+def idea_numbered(ideas: list[str], number: int | None) -> str | None:
+    """The idea a model's 1-based number points at in `numbered(ideas)`; None for no number or one out of range."""
+    return ideas[number - 1] if number and 1 <= number <= len(ideas) else None
