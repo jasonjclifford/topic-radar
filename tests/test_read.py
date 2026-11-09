@@ -219,6 +219,47 @@ async def test_a_repeat_that_adds_something_new_is_judged_as_usual(setup, site):
     assert story.items[0].decision == "quick hit" and story.items[0].eligible
 
 
+async def test_a_repeat_in_one_chunk_does_not_filter_an_article_whose_other_chunk_has_claims(setup, site):
+    story = make_story(site, "Year in review", page="/articles/many-sections.html")
+    model = ScriptedModel().on("read", "Year in review", [
+        answer(claim("From one", "The topic1 change number 1 lands in the next build.")),
+        answer(repeats_idea=1, adds_new=False),
+    ])
+    ctx, state, _ = setup(model, [story], known=[IDEA], chunk_chars=500, max_chunks=2)
+    await read(ctx, state)
+    item = story.items[0]
+    assert (item.decision, item.eligible) == ("quick hit", True)
+
+
+async def test_a_repeat_in_the_first_chunk_alone_does_not_filter_the_article(setup, site):
+    story = make_story(site, "Year in review", page="/articles/many-sections.html")
+    model = ScriptedModel().on("read", "Year in review", [
+        answer(repeats_idea=1, adds_new=False),
+        answer(claim("From two", "The topic1 change number 11 lands in the next build.")),
+    ])
+    ctx, state, _ = setup(model, [story], known=[IDEA], chunk_chars=500, max_chunks=2)
+    await read(ctx, state)
+    assert story.items[0].decision == "quick hit"
+
+
+async def test_an_article_whose_every_chunk_repeats_with_nothing_new_is_filtered(setup, site):
+    story = make_story(site, "Year in review", page="/articles/many-sections.html")
+    model = ScriptedModel().on("read", "Year in review", [
+        answer(repeats_idea=1, adds_new=False), answer(repeats_idea=1, adds_new=False)])
+    ctx, state, _ = setup(model, [story], known=[IDEA], chunk_chars=500, max_chunks=2)
+    await read(ctx, state)
+    item = story.items[0]
+    assert (item.decision, item.reason, item.eligible) == ("filtered", f"repeats: {IDEA}", False)
+
+
+async def test_a_chunk_with_nothing_to_say_does_not_stop_a_repeating_article_being_filtered(setup, site):
+    story = make_story(site, "Year in review", page="/articles/many-sections.html")
+    model = ScriptedModel().on("read", "Year in review", [answer(repeats_idea=1, adds_new=False), answer()])
+    ctx, state, _ = setup(model, [story], known=[IDEA], chunk_chars=500, max_chunks=2)
+    await read(ctx, state)
+    assert story.items[0].decision == "filtered"
+
+
 async def test_a_repeat_naming_an_idea_that_does_not_exist_is_ignored(setup, site):
     story = make_story(site)
     model = ScriptedModel().on("read", story.items[0].title, answer(claim(), repeats_idea=7))

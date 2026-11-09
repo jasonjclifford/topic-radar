@@ -70,10 +70,13 @@ def _article_markdown(art: Article) -> str:
 
 async def _read_item(ctx, item: Item, known: list[str]) -> tuple[Article, str | None, bool]:
     """Fetch, extract, chunk and ask the model about each chunk. Returns the article, the known idea it
-    repeats (if any chunk said so) and whether any chunk said it adds something new."""
+    repeats and whether any chunk said it adds something new. The article repeats an idea only when every
+    chunk that said anything (claims or a repeat) names a repeated idea; one chunk with claims and no
+    repeat means the article as a whole is not a repeat."""
     text = await _page_text(ctx, item)
     art = Article(item=item, text=text)
     idea: str | None = None
+    all_repeat = True
     adds_new = False
     for chunk in chunk_text(text, ctx.settings.chunk_chars, ctx.settings.max_chunks):
         prompt = _prompt(ctx, item, known, chunk)
@@ -86,10 +89,13 @@ async def _read_item(ctx, item: Item, known: list[str]) -> tuple[Article, str | 
             kept = quote_found(c.quote, chunk)
             art.claims.append(Claim(text=c.claim.strip(), quote=c.quote.strip(), kept=kept))
             art.dropped += not kept
-        if idea is None:
-            idea = idea_numbered(known, answer.parsed.repeats_idea)
+        repeated = idea_numbered(known, answer.parsed.repeats_idea)
+        if repeated is None:
+            all_repeat = all_repeat and not answer.parsed.claims
+        elif idea is None:
+            idea = repeated
         adds_new = adds_new or answer.parsed.adds_new
-    return art, idea, adds_new
+    return art, idea if all_repeat else None, adds_new
 
 
 async def read(ctx, state: RunState) -> RunState:
