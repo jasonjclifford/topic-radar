@@ -20,8 +20,8 @@ If the text has nothing the reader would care about, answer with an empty list o
 
 Answer with JSON only: {"claims": [{"claim": "...", "quote": "..."}, {"claim": "...", "quote": "..."}], "repeats_idea": 2, "adds_new": false}
 === user ===
+<chunk>
 Article title: {title}
 
-<chunk>
 {chunk}
 </chunk>
