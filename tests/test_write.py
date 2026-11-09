@@ -337,3 +337,14 @@ async def test_an_address_in_claim_text_never_reaches_a_failed_write_fallback_st
     assert state.written.top[0].fallback_reason == "write call failed"
     _assert_fallback_claim_is_clean(ctx, state)
     assert "evil" in state.articles[0].claims[1].text  # the article's own claims are not mutated
+
+
+async def test_a_grouped_stories_quick_hit_line_comes_from_its_quick_hit_item_not_its_first_item(setup):
+    a = Item(title="Filtered first", address="https://e.test/a", source=FEED, published=NOW, summary="a words",
+             decision="filtered", reason="repeats: x", watch="test")
+    b = Item(title="Quick second", address="https://e.test/b", source=FEED, published=NOW, summary="b words",
+             relevance=2, decision="quick hit", to_read=True, watch="test")
+    ctx, state = setup(ScriptedModel(), [], quicks=[Story([a, b])])
+    await write(ctx, state)
+    (q,) = state.written.quick
+    assert q.line == "Quick second: b words" and q.address == "https://e.test/b"

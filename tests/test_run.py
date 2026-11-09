@@ -249,6 +249,15 @@ def test_a_settings_value_of_the_wrong_type_exits_2_naming_the_field_and_type(si
     assert not (h.folder / "runs").exists()
 
 
+def test_a_negative_read_cap_in_settings_exits_2_naming_the_field(site, tmp_path, monkeypatch):
+    h = Harness(tmp_path / "radar", site, monkeypatch)
+    (h.folder / "settings.yaml").write_text("read_cap: -1\n")
+    result = h.run()
+    assert result.exit_code == 2
+    assert "read_cap" in result.output and "0 or more" in result.output
+    assert not (h.folder / "runs").exists()
+
+
 def test_a_watch_name_cannot_reach_outside_the_watches_folder(h):
     (h.folder / "outside.yaml").write_text("name: X\ninterests: y\n")
     result = h.run("../outside")
@@ -369,6 +378,14 @@ async def test_the_empty_state_with_nothing_read_says_nothing_scored_high_enough
     report = render(state_with(make_item(), written=Written()))
     assert "No article was read because no item scored high enough to read" in report
     assert "0 items were read" not in report and "none had a claim" not in report
+
+
+async def test_the_empty_state_when_nothing_was_scored_names_that_cause_and_points_to_run_health(render):
+    items = [make_item("One", "https://e.test/1", decision="not scored"),
+             make_item("Two", "https://e.test/2", decision="not scored")]
+    report = render(state_with(*items, written=Written()))
+    assert "No article was read because the items weren't scored" in report and "Run health" in report
+    assert "no item scored high enough" not in report
 
 
 async def test_the_empty_state_with_failed_reads_points_to_run_health(render):

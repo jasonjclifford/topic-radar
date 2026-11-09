@@ -31,6 +31,9 @@ def _is_number(v) -> bool:
     return isinstance(v, (int, float)) and not isinstance(v, bool)
 
 
+_MINIMUM = {"read_cap": 0, "chunk_chars": 1, "max_chunks": 1, "context": 1}  # read_cap 0 reads nothing, as --read-cap 0 does
+
+
 _EXPECTED = {
     "str": _Type("text", lambda v: isinstance(v, str)),
     "int": _Type("a whole number", lambda v: isinstance(v, int) and not isinstance(v, bool)),
@@ -68,4 +71,7 @@ def load_settings(folder: Path) -> Settings:
         if not expected.accepts(value):
             raise SettingsError(f"{path.name}: {name} must be {expected.words}, not {value!r}. Fix it or delete the "
                                 "line to use the default.")
+        if name in _MINIMUM and value < _MINIMUM[name]:
+            raise SettingsError(f"{path.name}: {name} must be {_MINIMUM[name]} or more, not {value!r}. Fix it or "
+                                "delete the line to use the default.")
     return replace(Settings(), **values)

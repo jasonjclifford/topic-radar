@@ -37,3 +37,23 @@ def test_right_types_load_including_a_whole_number_for_a_number_field(tmp_path):
     (tmp_path / "settings.yaml").write_text("request_delay_seconds: 2\ntimeout_seconds: 1.5\nmodel: m\n", encoding="utf-8")
     s = load_settings(tmp_path)
     assert (s.request_delay_seconds, s.timeout_seconds, s.model) == (2, 1.5, "m")
+
+
+@pytest.mark.parametrize("line, field, words", [
+    ("read_cap: -1", "read_cap", "0 or more"),
+    ("chunk_chars: 0", "chunk_chars", "1 or more"),
+    ("chunk_chars: -5", "chunk_chars", "1 or more"),
+    ("max_chunks: 0", "max_chunks", "1 or more"),
+    ("context: -1", "context", "1 or more"),
+])
+def test_a_zero_or_negative_count_is_an_error_naming_the_field(tmp_path, line, field, words):
+    (tmp_path / "settings.yaml").write_text(line + "\n", encoding="utf-8")
+    with pytest.raises(SettingsError) as e:
+        load_settings(tmp_path)
+    assert "settings.yaml" in e.value.message and field in e.value.message and words in e.value.message
+
+
+def test_a_read_cap_of_zero_and_small_positive_counts_load(tmp_path):
+    (tmp_path / "settings.yaml").write_text("read_cap: 0\nchunk_chars: 1\nmax_chunks: 1\ncontext: 1\n", encoding="utf-8")
+    s = load_settings(tmp_path)
+    assert (s.read_cap, s.chunk_chars, s.max_chunks, s.context) == (0, 1, 1, 1)

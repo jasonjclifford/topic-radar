@@ -143,6 +143,8 @@ def _no_top_stories(state: RunState) -> str:
     if read == 0:
         if any(i.decision == "failed" for i in state.items):
             return "No article was read: the items that scored high enough couldn't be read. See Run health."
+        if state.items and all(i.decision == "not scored" for i in state.items):
+            return "No article was read because the items weren't scored. See Run health."
         return "No article was read because no item scored high enough to read."
     repeats = sum(a.item.decision == "filtered" and a.item.reason.startswith("repeats") for a in state.articles)
     if repeats == read:

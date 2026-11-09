@@ -117,7 +117,7 @@ async def _summarize(ctx, out: Written) -> None:
 
 
 def _quick_hit(number: int, story: Story) -> QuickHit:
-    item = story.items[0]
+    item = next((i for i in story.items if i.decision == "quick hit"), story.items[0])
     summary = clean(item.summary)
     if len(summary) > QUICK_SUMMARY_CHARS:
         summary = summary[:QUICK_SUMMARY_CHARS].rstrip() + "…"
