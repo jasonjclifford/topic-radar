@@ -13,6 +13,8 @@ class Item:
     summary: str = ""
     decision: str = "not scored"
     reason: str = ""
+    notes: str = ""  # the feed's own full text for the entry (plain), when it carries one
+    links: list[str] = field(default_factory=list)  # a combined item's release addresses, in version order
 
     def __setattr__(self, name, value):
         if name == "decision" and value not in DECISIONS:
@@ -45,8 +47,16 @@ class Article:
 
 
 @dataclass
+class FailedSource:
+    source: str  # the seed address
+    reason: str  # a plain sentence, no exception text
+
+
+@dataclass
 class RunState:
     items: list[Item] = field(default_factory=list)
     stories: list[Story] = field(default_factory=list)
     articles: list[Article] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
+    failed_sources: list[FailedSource] = field(default_factory=list)
+    feed_titles: dict[str, str] = field(default_factory=dict)  # feed address -> the feed's own title

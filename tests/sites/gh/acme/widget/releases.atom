@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+<id>tag:example.test,2008:Repository/1/releases</id><title>Release notes from widget</title><updated>2026-11-08T10:00:00Z</updated>
+<entry><id>r1</id><updated>2026-11-03T10:00:00Z</updated><link rel="alternate" type="text/html" href="{BASE}/gh/acme/widget/releases/tag/v0.9.0"/><title>v0.9.0</title>
+<content type="html">&lt;h2&gt;Nine&lt;/h2&gt;&lt;p&gt;NOTES-0.9.0 adds a cache, see &lt;a href="https://docs.example.test/cache"&gt;the cache guide&lt;/a&gt;.&lt;/p&gt;</content></entry>
+<entry><id>r2</id><updated>2026-11-08T10:00:00Z</updated><link rel="alternate" type="text/html" href="{BASE}/gh/acme/widget/releases/tag/v0.10.1"/><title>v0.10.1: fix the cache (#12)</title>
+<content type="html">&lt;p&gt;NOTES-0.10.1 fixes a crash.&lt;/p&gt;</content></entry>
+<entry><id>r3</id><updated>2026-11-04T10:00:00Z</updated><link rel="alternate" type="text/html" href="{BASE}/gh/acme/widget/releases/tag/v0.2.1"/><title>v0.2.1</title>
+<content type="html">&lt;p&gt;NOTES-0.2.1 small fix.&lt;/p&gt;</content></entry>
+<entry><id>r4</id><updated>2026-11-07T10:00:00Z</updated><link rel="alternate" type="text/html" href="{BASE}/gh/acme/widget/releases/tag/v0.10.0"/><title>v0.10.0</title>
+<content type="html">&lt;h2&gt;Ten&lt;/h2&gt;&lt;p&gt;NOTES-0.10.0 is the big one.&lt;/p&gt;</content></entry>
+<entry><id>r5</id><updated>2026-11-06T10:00:00Z</updated><link rel="alternate" type="text/html" href="{BASE}/gh/acme/widget/releases/tag/v0.10.0-rc1"/><title>v0.10.0-rc1</title>
+<content type="html">&lt;p&gt;NOTES-0.10.0-rc1 candidate.&lt;/p&gt;</content></entry>
+</feed>

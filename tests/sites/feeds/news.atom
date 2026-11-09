@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+<title>Harbor News</title><id>{BASE}/feeds/news.atom</id><updated>2026-11-08T10:00:00Z</updated>
+<entry><title>Dock repairs finish</title><id>a1</id><link href="{BASE}/posts/dock.html"/><updated>2026-11-08T10:00:00Z</updated><summary>The east dock reopens.</summary></entry>
+<entry><title>New ferry timetable</title><id>a2</id><link href="{BASE}/posts/ferry.html"/><updated>2026-11-07T10:00:00Z</updated><content type="html">&lt;p&gt;Ferries run &lt;em&gt;hourly&lt;/em&gt;.&lt;/p&gt;</content></entry>
+</feed>

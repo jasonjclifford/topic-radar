@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"><channel>
+<title>Garden Notes</title><link>{BASE}/</link><description>posts</description>
+<item><title>Fresh post</title><link>{BASE}/posts/fresh.html</link><pubDate>Sun, 08 Nov 2026 09:00:00 GMT</pubDate><description>&lt;p&gt;Soil &lt;b&gt;tips&lt;/b&gt;.&lt;/p&gt;</description></item>
+<item><title>Just inside the window</title><link>{BASE}/posts/inside.html</link><pubDate>Mon, 02 Nov 2026 13:00:00 GMT</pubDate></item>
+<item><title>Just outside the window</title><link>{BASE}/posts/outside.html</link><pubDate>Mon, 02 Nov 2026 11:00:00 GMT</pubDate></item>
+<item><title>Long ago</title><link>{BASE}/posts/old.html</link><pubDate>Thu, 01 Oct 2026 08:00:00 GMT</pubDate></item>
+<item><title>Undated note</title><link>{BASE}/posts/undated.html</link></item>
+</channel></rss>
