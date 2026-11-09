@@ -1,0 +1,79 @@
+# The primary case: see mvp/primary-case.md.
+# Copy to "Topic Radar/watches/ai-engineering.yaml", then run: topic-radar init ai-engineering
+name: AI engineering
+
+interests: |
+  Where AI engineering is going, for someone who uses coding agents every day and
+  builds tools that call models at runtime.
+
+  Coding agents (Claude Code, GitHub Copilot in VS Code, Devin and their peers):
+  new capabilities and how to get the most from them — skills, subagents,
+  instruction files, prompts and prompt files, hooks, MCP servers, plan and agent
+  modes, background and cloud agents, review workflows. Above all: how to keep
+  cost and usage down without losing quality (model choice per task, context
+  size, caching, when to use a subagent, when not to).
+
+  Building with models at runtime: agent frameworks (LangGraph and others),
+  structured output, tool calling, evaluation and testing of model-driven code,
+  small and local models (Ollama, MLX), running well on a laptop, reliability
+  patterns, and what changed in model releases that matters to builders
+  (context, price, speed, tool use), not the leaderboard.
+
+  I want articles worth 15+ minutes: first-hand experience with numbers, primary
+  sources (release notes, official engineering posts, papers), and clear
+  arguments about where the field is heading.
+
+not_interested: |
+  Listicles and "top 10 tips" that repeat the basics. Funding rounds, valuations,
+  executive moves, lawsuits. AI art, image and video generation. Benchmarks with
+  no method or no practical meaning. Vendor marketing with no technical detail.
+  Opinion threads and hot takes. General "AI will change everything" pieces.
+  Minor patch releases that only fix bugs I'd never hit.
+
+already_know: |
+  Things I already know, so the report doesn't keep telling me:
+  - Keep an instruction file (CLAUDE.md, copilot-instructions.md, AGENTS.md) with project rules.
+  - Use subagents to keep the main context small and to fan out searches.
+  - Use a cheaper or faster model for simple tasks.
+  - Give agents tests to run so they can check their own work.
+  - Plan before letting an agent edit code.
+  - Prompt caching lowers cost for repeated context.
+  - MCP lets agents call outside tools.
+  - Build each model prompt fresh instead of growing a conversation, for small models.
+  - Ask small models for structured output and validate it in code.
+
+seeds:
+  # Coding agents
+  - https://github.com/anthropics/claude-code/releases.atom      # Claude Code releases
+  - https://www.anthropic.com/engineering                         # Anthropic engineering posts
+  - https://www.anthropic.com/news                                # Anthropic news (models, pricing)
+  - https://github.blog/changelog/label/copilot/                  # GitHub Copilot changes
+  - https://code.visualstudio.com/feed.xml                        # VS Code updates (Copilot in the editor)
+  - https://cognition.ai/blog                                     # Devin
+  # Building with models
+  - https://github.com/langchain-ai/langgraph/releases.atom       # LangGraph releases
+  - https://blog.langchain.com/                                   # LangChain and LangGraph posts
+  - https://github.com/ollama/ollama/releases.atom                # Ollama releases
+  - https://huggingface.co/blog/feed.xml                          # Hugging Face blog
+  - https://openai.com/news/rss.xml                               # OpenAI news
+  # People who write first-hand, with numbers
+  - https://simonwillison.net/atom/everything/
+  - https://www.latent.space/feed
+  - https://hamel.dev/index.xml
+  - https://eugeneyan.com/rss/
+  - https://martinfowler.com/feed.atom
+  # What builders are discussing
+  - https://hnrss.org/newest?points=300&count=100                  # Hacker News stories with 300+ points
+
+searches:                       # used from stage 2 (wide watches); the MVP notes them and skips them
+  - Claude Code subagents skills cost
+  - GitHub Copilot agent mode custom instructions prompt files
+  - Devin AI software engineer workflow
+  - coding agent token cost reduction
+  - LangGraph production agent lessons
+  - evaluating LLM agents in production
+  - small local LLM structured output tool calling
+
+mode: wide                      # from stage 2: also search the web each run
+
+interval: 7d

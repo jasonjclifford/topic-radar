@@ -30,7 +30,7 @@ src/topic_radar/
   steps/
     feedback_in.py       # step 0: read the report's Feedback section
     collect.py           # step 1: each active source's reader, in turn
-    normalize.py         # step 2: normalized addresses, repeats, updates
+    normalize.py         # step 2: normalized addresses, repeats, updates, combined releases
     triage.py            # step 3: model, batches of titles
     read.py              # step 4: model, chunks, quote check, article files
     group.py             # step 5: near-identical titles into stories
@@ -55,6 +55,7 @@ src/topic_radar/
     history.py           # history/<watch>.csv
     runfolder.py         # runs/<time>/ and everything in it; events.jsonl
     feedbackfiles.py     # feedback/<watch>.md, profile/<watch>.md
+    known.py             # known/<watch>.md, the known-ideas list (O7)
   report/
     render.py            # markdown and HTML from the report structure
     templates/
@@ -112,7 +113,8 @@ Each later stage plugs in at one of these without changing the others:
 | `ModelClient` | Ollama, scripted | a separate writing model; the `embed` call for embeddings |
 | `store/` | the only code that touches state files | the console reads and writes through it too, so its rules (atomic writes, end-of-run changes) hold for every interface |
 | `report/` | Markdown + HTML from one report structure | sections added to the structure (Dates to know, Trends, Candidate sources); the console renders the same structure |
-| Feedback kinds | six kinds | `add source`, `source more/less` weights, liked/disliked examples, all through the same interpreter |
+| Feedback kinds | seven kinds | `add source`, `source more/less` weights, liked/disliked examples, all through the same interpreter |
+| Known ideas | a numbered list in the triage prompt | compared by embeddings in stage 5, so the list can grow past what fits in a prompt |
 | `platform.py` | open a file, Apple silicon check | scheduler, launcher, keep awake, battery, notifications |
 | `cli.py` | six commands | `schedule`, `console`, `tidy`, `new` |
 

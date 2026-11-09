@@ -4,7 +4,7 @@ From the MVP ([`mvp/spec.md`](mvp/spec.md)) to the full design ([`DESIGN.md`](DE
 
 | Stage | Adds | Seam | Design section |
 |---|---|---|---|
-| **1. MVP** | Feeds, cursors, history, triage, read with quote check, near-identical grouping, the 5-minute report, feedback in words with a rebuilt profile, the run folder, `find`, `doctor`, macOS and Windows | — | `mvp/` |
+| **1. MVP** | Feeds, cursors, history, triage, read with quote check, near-identical grouping, combined releases, a known-ideas list so the same advice isn't shown again, the 5-minute report, feedback in words with a rebuilt profile, the run folder, `find`, `doctor`, macOS and Windows | — | `mvp/` |
 | **2. Beyond feeds** | Playwright on the installed Chrome or Edge; listing pages, living documents (section fingerprints), sitemaps, PDFs; web search in the browser; **wide watches** that start from a topic; source discovery and the report's Candidate sources; `add source` feedback | `Reader` kinds; `discover_sources` step; feedback kinds | 4.3, 5, 7 |
 | **3. Hands-off** | `schedule` (launchd on Mac, Task Scheduler on Windows); notifications; keep awake while running; battery rule; read cap set from the last run's times; install scripts for both systems and the launcher; `new` (write a watch from plain questions) | `platform.py`; `cli.py` | 8.1, 8.3, 8.6 |
 | **4. Console** | The local web page for everything after install: home (latest report, Run now), watches, sources (confirm, mute, sample, a wide watch's searches), runs, find, feedback buttons, schedule, **health** (the `doctor` checks with fixes and Try again), **settings**, quick check and tidy buttons; stops by itself after about 30 minutes with no page open | `store/`; `report/` structure | 8.3 |

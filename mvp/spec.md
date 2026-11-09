@@ -1,6 +1,6 @@
 # Topic radar MVP — spec
 
-**Status: draft, ready for review.** The full design is [`../DESIGN.md`](../DESIGN.md); how the MVP grows into it is [`../ROADMAP.md`](../ROADMAP.md). How the MVP is built is [`architecture.md`](architecture.md); the files it reads and writes are [`files.md`](files.md).
+**Status: draft, ready for review.** The case it's built and tested against first is [`primary-case.md`](primary-case.md) (AI engineering). The full design is [`../DESIGN.md`](../DESIGN.md); how the MVP grows into it is [`../ROADMAP.md`](../ROADMAP.md). How the MVP is built is [`architecture.md`](architecture.md); the files it reads and writes are [`files.md`](files.md).
 
 ## Problem
 
@@ -29,6 +29,7 @@ It runs from the command line, by hand. Everything else in the full design (web 
 | O4 | I can see what it did, with only Finder or File Explorer, a text editor and a spreadsheet |
 | O5 | Feedback in plain words changes the next run, with no config to maintain |
 | O6 | Runs on a 16 GB laptop on macOS or Windows with a local model, and fails clearly when something it needs is missing |
+| O7 | Not the same ideas again: an article that only repeats what I already know is filtered, even at a new address |
 
 ## Acceptance criteria
 
@@ -36,7 +37,7 @@ Each criterion is checked by running the tool (offline tests use a local test fe
 
 ### Watches and sources (O1, O4)
 
-- **AC1** A watch file with `name`, `interests`, `not_interested`, `seeds` and optional `interval` (default `7d`) is loaded from `watches/`. A watch file that is not valid YAML, or lacks `name` or `interests`, is skipped with a message naming the file, the line where known, and the missing field; the other watches still run.
+- **AC1** A watch file with `name`, `interests`, `not_interested`, `seeds`, and optional `already_know` and `interval` (default `7d`) is loaded from `watches/`. The later-stage fields `searches` and `mode` are accepted, and `notes.md` says they're skipped until a later version. A watch file that is not valid YAML, or lacks `name` or `interests`, is skipped with a message naming the file, the line where known, and the missing field; the other watches still run.
 - **AC2** `topic-radar init <watch>` turns each seed into proposed feeds: a seed that is itself an RSS or Atom feed is proposed as is; a seed that is an HTML page is proposed as the feeds its `<link rel="alternate">` tags point to; a seed with neither is reported as "no feed found" and nothing is proposed for it.
 - **AC3** `init` asks about each proposed feed (`y` / `n`), shows the feed's title and its newest item's title, and writes each answer to `sources/<watch>.yaml` as `active` or `muted`. Running `init` again only asks about feeds not already in the file.
 - **AC4** A run reads only `active` sources.
@@ -83,7 +84,7 @@ Each criterion is checked by running the tool (offline tests use a local test fe
 - **AC30** Text under the "Feedback" heading of `reports/latest.md`, if any, is read at the start of the next run, recorded in the feedback files (below), and removed from `reports/latest.md`.
 - **AC31** `topic-radar feedback "<text>"` records the same way and prints what it understood before saving; `--yes` skips the confirmation.
 - **AC32** Ids in feedback (`S2`, `Q7`) are resolved by code to the item's title, address and source from the run that wrote `reports/latest.md`. An id that doesn't exist in that run is reported as unknown and not recorded.
-- **AC33** The model interprets each feedback line into one or more of: `more like this`, `less like this`, `wrong relevance`, `mute source`, `style`, or `unclear`, each tied to a watch (or all watches when no watch can be told). Each is appended to `feedback/<watch>.md` with the date, my words, and what was understood. `unclear` changes nothing and is listed in the next report's Run health.
+- **AC33** The model interprets each feedback line into one or more of: `more like this`, `less like this`, `wrong relevance`, `mute source`, `already know`, `style`, or `unclear`, each tied to a watch (or all watches when no watch can be told). Each is appended to `feedback/<watch>.md` with the date, my words, and what was understood. `unclear` changes nothing and is listed in the next report's Run health.
 - **AC34** `mute source` sets that source's status to `muted` in the sources file; it isn't read in later runs.
 - **AC35** After new feedback is recorded, the watch's profile (`profile/<watch>.md`) is rebuilt by the model from the watch file and the whole feedback file (never edited in place). The profile is part of the triage, read and write prompts, and is printed in the report. Deleting the profile is harmless: it's rebuilt before the next triage.
 
@@ -96,6 +97,13 @@ Each criterion is checked by running the tool (offline tests use a local test fe
 - **AC40** A run exits with code 0 when it wrote a report, even if some sources failed, and non-zero only when it didn't.
 - **AC41** (Manual, real model.) On a 16 GB Apple silicon Mac, a run over a reference set of about 300 new items with the default settings finishes in 60 minutes or less, and the tool's memory (Ollama plus the tool) stays under 8 GB.
 - **AC42** (Manual, real model.) For a reference week, the report can be read in under 5 minutes, and each of its top stories can be checked against its saved article.
+
+### Not the same ideas again (O7)
+
+- **AC43** Each watch has a known-ideas list (`known/<watch>.md`), one short idea per line. It's built from three places: the watch's `already_know` text (split into ideas by the model the first time it's seen or whenever it changes), each top story's one-line takeaway once its report is written, and `already know` feedback (the item's takeaway). It keeps the newest `known_ideas_max` ideas (default 80), and it's changed only at the end of a run, like the other state files (AC11).
+- **AC44** Triage sees the watch's known ideas, numbered. When the model answers that an item's main point is known idea *n* and that it adds nothing new, code gives the item the decision `filtered` with the reason "repeats: <idea n>". When the model answers that it's known idea *n* but adds something new (numbers, a new method, a changed result), the item is judged as usual and its reason says what it adds.
+- **AC45** "Filtered out" in the report shows how many items repeated known ideas, and Run health gives the path to `known/<watch>.md`.
+- **AC46** A feed's items that are releases of one project in one run (a GitHub `releases.atom` feed, or a feed whose item titles are version numbers) are combined into one item titled "<project>: <n> releases this week", listing each version and linking each release. It's triaged and read as one item, with the release notes joined in version order.
 
 ## Non-goals for the MVP
 

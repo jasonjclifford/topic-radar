@@ -10,6 +10,7 @@ Topic Radar/
   history/<watch>.csv       # written by the tool; don't edit
   feedback/<watch>.md       # written by the tool; my words and what it understood
   profile/<watch>.md        # written by the tool; safe to delete
+  known/<watch>.md          # written by the tool; ideas I already know, one per line; safe to edit
   runs/<YYYY-MM-DD-HHMM>/   # one per run
   reports/latest.md         # copy of the newest report; I type feedback at its end
   reports/latest.html
@@ -30,6 +31,7 @@ word_budget: 1200              # most words from the top of the report through Q
 same_story_similarity: 90      # title similarity (0-100) at which items are one story
 request_delay_seconds: 1       # pause between requests to the same site
 timeout_seconds: 30            # per request
+known_ideas_max: 80            # most ideas kept in each watch's known-ideas list
 ```
 
 ## watches/<watch>.yaml
@@ -43,8 +45,14 @@ not_interested: |                 # optional; free text
 seeds:                            # web addresses: feeds or pages that link to feeds
   - https://arxiv.org/list/cs.CL/new
   - https://ollama.com/blog
+already_know: |                   # optional; things the report shouldn't keep telling me
+  - Keep an instruction file with project rules.
 interval: 7d                      # optional, default 7d; how far back the first run reaches
+searches: []                      # accepted, used from stage 2
+mode: normal                      # accepted, used from stage 2 (wide)
 ```
+
+The primary case's full watch is `examples/watches/ai-engineering.yaml`.
 
 ## sources/<watch>.yaml
 
@@ -128,6 +136,15 @@ because it restates a rule without adding anything.
 You follow AI research. You want new architectures, small local models and
 evaluation methods, with numbers. You don't want funding news, executive moves,
 or opinion threads. You prefer papers and release notes over news write-ups.
+```
+
+## known/<watch>.md
+
+```markdown
+<!-- Written by topic-radar: ideas you already know, one per line. Safe to edit: delete a line to see that idea again, add one to stop seeing it. -->
+- Keep an instruction file (CLAUDE.md, copilot-instructions.md, AGENTS.md) with project rules. (from already_know)
+- Use subagents to keep the main context small. (from already_know)
+- Claude Code hooks can block a tool call before it runs. (top story S1, 2026-11-09-0700)
 ```
 
 ## reports/latest.md
