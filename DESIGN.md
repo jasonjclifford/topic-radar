@@ -35,7 +35,7 @@ Topic radar does that chore on my laptop and gives me one short report.
 
 ## 4. What I give it
 
-Three things, all short and in plain language. The design rule is: **I describe what I want once; the tool keeps the details.**
+Three things, all short and in plain language: a watch, confirmation of its sources, and feedback. The design rule is: **I describe what I want once; the tool keeps the details.**
 
 ### 4.1 A watch file
 
@@ -75,7 +75,7 @@ seeds:
   - https://news.ycombinator.com/best
 ```
 
-Seeds are just web addresses. The tool works out what each one is (section 5).
+Seeds are just web addresses. The tool works out what each one is (section 5). A watch can also have no seeds at all and start from a search (4.3).
 
 ### 4.2 Confirming sources
 
@@ -83,14 +83,40 @@ The tool keeps its list of sources per watch in `sources/<watch>.yaml`, a readab
 
 | Status | Meaning |
 |---|---|
-| `proposed` | Found by the tool (from my seeds, from links that keep coming up, from searches). Read once as a sample, not used in the report |
+| `proposed` | Found by the tool (from my seeds, from links that keep coming up, from sites that keep turning up in wide searches, 4.3). Read once as a sample, not used in the report |
 | `active` | Confirmed by me. Read every run |
 | `muted` | I said no, or "less of this source". Not read; not proposed again |
 | `broken` | Failed three runs in a row (not found, blocked, layout changed). Listed in Run health until fixed or muted |
 
 The first run (`topic-radar init <watch>`) turns my seeds into concrete sources: it finds a site's RSS/Atom feed or sitemap, or notices that a page is a list of posts. It shows me the list and I confirm each one with a keystroke (`y` yes / `n` no / `s` sample first). After that, new candidates appear at the bottom of each report ("Candidate sources") and I accept them with a line of feedback.
 
-### 4.3 Feedback
+### 4.3 Starting from a search: cast a wide net
+
+Seeds are optional. A watch can start from **just a topic**, and the tool goes looking for updates on it from anywhere on the web, not only from sites I already know. This is the way in when I'm new to a field, or when the interesting news turns up in places nobody would think to seed (a university press office, a standards body, a small lab's blog).
+
+```yaml
+# watches/solid-state-batteries.yaml
+name: Solid-state batteries
+interests: |
+  Solid-state and semi-solid battery chemistry: electrolytes, anode-free designs,
+  manufacturing scale-up, independent test results, cycle-life numbers.
+not_interested: |
+  Stock tips, EV launch hype without battery details, press releases with no numbers.
+mode: wide                              # wide = search the web each run; seeds below are optional extras
+```
+
+How a wide watch runs, each time:
+
+1. **Write the searches.** The model turns the interests into 8–12 short search queries, varied on purpose: plain terms, technical terms ("sulfide electrolyte", "lithium metal anode cycle life"), and kinds of source ("preprint", "press release", "standard", "rule"). Queries that found nothing relevant for several runs are swapped for new ones; the ones in use are listed in `sources/<watch>.yaml`, so I can see them (and change them if I want, though I never have to).
+2. **Search.** Each query runs in the local browser on a public search engine's results page, limited to results since the last run (the engine's "past week" filter), the first page or two of results only. Several engines can take turns, so no single one sees many queries.
+3. **Treat every result like any other item.** Results go through the same steps as feed items (section 7): repeats dropped by address and by history, prefilter, triage, read, cluster. A story covered by many sites becomes one story with the primary source marked.
+4. **Learn the good places.** Each site that produced a relevant item is counted. A site that keeps coming up (say, relevant items in 3 of the last 4 runs) is proposed as a source in Candidate sources, with its feed or listing page if it has one. Once I confirm it, it's read directly every run, which is cheaper and more complete than finding it through search.
+
+So a wide watch tends to narrow on its own: it starts as all search, and over a few weeks the sources that matter become regular sources, while the searches keep casting the net for the new places. I can also mix the two from the start: a normal watch with a few seeds can say `mode: wide` to add the searches on top.
+
+Limits that keep it polite and on the laptop: at most ~12 queries per wide watch per run, a pause of several seconds between searches, at most ~60 new results per watch going on to triage (ranked by the prefilter), and the same blocked-search rule as everywhere else (skipped and noted, never retried in a loop).
+
+### 4.4 Feedback
 
 Covered in section 9. The short version: I write one line, in words, and the tool turns it into changes it shows me back.
 
@@ -195,7 +221,7 @@ flowchart LR
 | 8 | Write | yes | One call per top story, with **only** that story's checked findings and quotes as input (never the raw pages, never other stories). Then one call for the 30-second summary and one for trends, each from the story summaries only. Links are inserted by code from the findings, never typed by the model |
 | 9 | Assemble | no | Report from a template; finish `notes.md` and `items.csv`; then, only now, update the sources file (cursors) and the history |
 
-Source discovery runs alongside: sites that relevant items keep linking to, and that aren't sources yet, are counted across runs; once one passes a threshold (say, linked from 3 relevant items over 2 runs), its feed or listing page is found and it's added as `proposed`.
+Source discovery runs alongside: sites that relevant items keep linking to, or that keep turning up in wide searches (4.3), and that aren't sources yet, are counted across runs; once one passes a threshold (say, linked from 3 relevant items over 2 runs), its feed or listing page is found and it's added as `proposed`.
 
 ### 7.1 Rules for working with a small local model
 
@@ -527,7 +553,7 @@ From feedback alone, per run: how many top stories got 👍 vs 👎, items I pul
 | The small model invents facts or links | Verbatim quote check on every claim; links only from code; the write step sees only checked findings; every article read is saved so a story can be checked by hand |
 | The small model misjudges relevance | Loose prefilter + triage that errs on keeping; "Filtered out" and `items.csv` show what was dropped and why; feedback turns misses into examples |
 | Sites without feeds change layout | The listing reader finds items by repeated link patterns, with a model fallback; a source that used to have items and has none twice in a row is flagged in Run health |
-| Search engines block automated browsing | Few searches, slowly paced, in a real browser; a blocked search is skipped and noted, never retried in a loop. Feeds and seed sites carry most of the load, so a week without searches is still a useful report |
+| Search engines block automated browsing | Few searches, slowly paced, in a real browser; a blocked search is skipped and noted, never retried in a loop. Feeds and seed sites carry most of the load, so a week without searches is still a useful report. A wide watch (4.3) leans on search most at the start; the sites it learns become regular sources, so it depends on search less each week |
 | Run takes too long or the laptop sleeps | Read cap tuned from last run's timing; kept awake while running; the scheduler catches up after sleep (launchd on Mac, Task Scheduler's missed-start setting on Windows); state only changes at the end, so an interrupted run is simply run again |
 | The report grows past 5 minutes | Hard word budget enforced by code in the rank step, not left to the model |
 | One watch floods the report | At most 3 of 7 top stories per watch |
@@ -539,7 +565,7 @@ From feedback alone, per run: how many top stories got 👍 vs 👎, items I pul
 |---|---|---|
 | v0 | Feeds and sitemaps, cursors, triage, read, a plain report from one watch; the run folder with `notes.md`, `items.csv`, `articles/`; offline tests passing on Mac and Windows | The pipeline fits the laptop and the time budget on both systems; the 5-minute report is useful; a non-developer can follow what it did |
 | v1 | Feedback in the report and on the command line; the profile; liked/disliked examples; `topic-radar find` | Feedback changes next week's report; finding past items is easy |
-| v2 | Listing pages, living documents and web search through Playwright; source discovery and candidate sources; several watches in one report | Sources without feeds work; the tool finds sources I didn't seed |
+| v2 | Listing pages, living documents and web search through Playwright; wide watches that start from a topic (4.3); source discovery and candidate sources; several watches in one report | Sources without feeds work; the tool finds sources I didn't seed |
 | v3 | Clustering across sources; trends over runs; "Dates to know"; the installers for both systems, the launcher, the console (home, watches, sources, runs, find, schedule), `topic-radar doctor` | The report reads as stories, not items; someone with no dev setup can install, run and schedule it on Mac or Windows |
 | v4 | The console's Feedback page; replay of good weeks as test cases | Feedback costs a click; prompt changes can be checked |
 
