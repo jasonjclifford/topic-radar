@@ -136,7 +136,18 @@ async def write(ctx, state: RunState) -> RunState:
     picks = rank.picks(state.stories)
     out = Written()
     for number, story in enumerate(picks.top, 1):
-        out.top.append(await _write_story(ctx, state, out, number, story))
+        try:
+            out.top.append(await _write_story(ctx, state, out, number, story))
+        except Exception:
+            ctx.run_folder.record_exception(f"writing S{number}")
+            art = _article(state, story)
+            claims = [c for c in art.claims if c.kept] if art else []
+            title = clean(story.items[0].title)
+            line = f"Something unexpected went wrong writing S{number} ({title}), so it shows its headline and quoted claims."
+            out.failed_writes += 1
+            out.health.append(line)
+            ctx.run_folder.note(line)
+            out.top.append(_fallback(f"S{number}", story, art, claims, "unexpected error"))
     out.quick = [_quick_hit(n, s) for n, s in enumerate(picks.quick, 1)]
     await _summarize(ctx, out)
     state.written = out

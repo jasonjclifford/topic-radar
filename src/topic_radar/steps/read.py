@@ -9,6 +9,7 @@ from ..web import FetchError, fetch
 
 CLAIMS_PER_CHUNK = 12
 NAME_MAX = 80
+UNEXPECTED = "something unexpected went wrong while reading it (details/error.txt has the technical details)"
 
 
 class ClaimIn(LenientModel):
@@ -121,6 +122,11 @@ async def read(ctx, state: RunState) -> RunState:
             art, idea, adds_new = await _read_item(ctx, item, known)
         except ReadFailed as e:
             _mark(story, "failed", str(e))
+            continue
+        except Exception:
+            ctx.run_folder.record_exception(f"reading {item.title}")
+            _mark(story, "failed", UNEXPECTED)
+            ctx.run_folder.note(f"Couldn't read {item.title}: {UNEXPECTED}.")
             continue
         art.path = f"articles/{_file_name(number, item.title)}"
         (ctx.run_folder.path / art.path).write_text(_article_markdown(art), encoding="utf-8")

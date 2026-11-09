@@ -2,6 +2,8 @@ from ..readers import feed
 from ..state import FailedSource, RunState
 from ..web import FetchError
 
+UNEXPECTED = "something unexpected went wrong reading it (details/error.txt has the technical details)"
+
 
 async def collect(ctx, state: RunState) -> RunState:
     """Read each seed as a feed. A seed that fails is recorded with a plain reason; the rest go on."""
@@ -13,6 +15,12 @@ async def collect(ctx, state: RunState) -> RunState:
         except FetchError as err:
             state.failed_sources.append(FailedSource(seed, err.reason))
             ctx.run_folder.note(f"Couldn't read {seed}: {err.reason}.")
+            continue
+        except Exception:
+            ctx.run_folder.record_exception(f"reading {seed}")
+            reason = UNEXPECTED
+            state.failed_sources.append(FailedSource(seed, reason))
+            ctx.run_folder.note(f"Couldn't read {seed}: {reason}.")
             continue
         state.items.extend(result.items)
         state.feed_titles[seed] = result.title

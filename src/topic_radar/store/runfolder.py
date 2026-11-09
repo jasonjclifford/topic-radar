@@ -1,5 +1,6 @@
 import json
 import sys
+import traceback
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
@@ -50,6 +51,11 @@ class RunFolder:
                 f.write(line + "\n")
         for line in lines:
             self.echo(line)
+
+    def record_exception(self, what: str) -> None:
+        """Append the traceback of the exception being handled to details/error.txt, headed by what failed."""
+        with open(self.details / "error.txt", "a", encoding="utf-8") as f:
+            f.write(f"== {what} ==\n{traceback.format_exc()}\n")
 
     def event(self, name: str, /, **fields) -> None:
         row = {"time": self.clock().isoformat(), "event": name, **fields}

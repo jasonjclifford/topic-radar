@@ -168,3 +168,48 @@ async def test_a_standalone_item_at_a_release_address_never_drops_the_combined_i
     assert titles(state) == ["widget: 5 releases since the last run"]
     (item,) = state.items
     assert len(item.links) == 5 and "NOTES-0.2.1" in item.notes
+
+
+async def test_an_unexpected_error_combining_one_feed_leaves_its_items_ordinary_and_the_run_goes_on(site, make_ctx, monkeypatch):
+    from topic_radar.steps import normalize as normalize_step
+
+    def blow_up(source, feed_title, items):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(normalize_step, "_combine", blow_up)
+    ctx = make_ctx(seeds=[site.url(WIDGET)])
+    state = await run_both(ctx)
+    assert len(state.items) == 5  # the five release entries, uncombined
+    assert "RuntimeError: boom" in (ctx.run_folder.details / "error.txt").read_text(encoding="utf-8")
+
+
+async def test_an_unexpected_error_resolving_one_item_keeps_it_with_its_address_as_given(site, make_ctx, monkeypatch):
+    from topic_radar.steps import normalize as normalize_step
+    real = normalize_step.resolve_address
+
+    async def resolve_or_blow_up(ctx, address):
+        if address.endswith("/posts/a"):
+            raise RuntimeError("boom")
+        return await real(ctx, address)
+
+    monkeypatch.setattr(normalize_step, "resolve_address", resolve_or_blow_up)
+    ctx = make_ctx()
+    state = RunState(items=[Item("A", site.url("/posts/a"), site.url("/f"), NOW),
+                            Item("B", site.url("/posts/b/"), site.url("/f"), NOW)])
+    state = await normalize(ctx, state)
+    assert [(i.title, i.address) for i in state.items] == [("A", site.url("/posts/a")), ("B", site.url("/posts/b"))]
+    assert "RuntimeError: boom" in (ctx.run_folder.details / "error.txt").read_text(encoding="utf-8")
+
+
+async def test_a_title_with_a_5000_digit_version_is_ordered_as_plain_text_without_an_error(site, make_ctx):
+    def entry(n):
+        return (f"<entry><title>v{'1' * 5000}.{n}</title><link href='{site.url(f'/r/{n}')}'/>"
+                f"<updated>2026-11-08T10:00:00Z</updated></entry>")
+
+    site.pages["/gh/x/y/releases.atom"] = ("application/atom+xml", (
+        "<?xml version='1.0'?><feed xmlns='http://www.w3.org/2005/Atom'><title>t</title>"
+        + entry(1) + entry(2) + "</feed>").encode())
+    ctx = make_ctx(seeds=[site.url("/gh/x/y/releases.atom")])
+    state = await run_both(ctx)
+    assert [i.title for i in state.items] == ["y: 2 releases since the last run"]
+    assert not (ctx.run_folder.details / "error.txt").exists()  # no exception was raised and swallowed

@@ -3,6 +3,7 @@ import io
 import re
 from datetime import datetime, timezone
 from functools import partial
+from pathlib import Path
 
 import pytest
 from typer.testing import CliRunner
@@ -16,6 +17,7 @@ from topic_radar.state import (DECISIONS, Article, Claim, FailedSource, Item, Qu
                                WrittenStory)
 
 NOW = datetime(2026, 11, 9, 12, 0, tzinfo=timezone.utc)
+SITES = Path(__file__).parent / "sites"
 FEED = "https://e.test/feed"
 BOM = b"\xef\xbb\xbf"
 LINK = re.compile(r"(?<!\\)\[(?:\\.|[^\]\\])*\]\(<([^>]*)>\)")  # [text](<address>); escaped brackets aren't links
@@ -599,3 +601,55 @@ def test_a_feed_and_an_article_served_with_an_unknown_charset_are_still_read(h):
     assert result.exit_code == 0, result.output
     assert "Cedar 3.0 ships a faster scheduler" in h.report()
     assert [r["title"] for r in h.rows()] == ["Cedar 3.0 announced"]
+
+
+# --- hostile input does not abort the run ----------------------------------------------------
+
+def _rss(*items):
+    return ("<?xml version='1.0'?><rss version='2.0'><channel><title>T</title>" + "".join(items)
+            + "</channel></rss>").encode()
+
+
+def _item(title, link, pub="Sun, 08 Nov 2026 09:00:00 GMT", desc="cedar"):
+    return f"<item><title>{title}</title><link>{link}</link><pubDate>{pub}</pubDate><description>{desc}</description></item>"
+
+
+@pytest.mark.parametrize("charset", ["undefined", "idna"])
+def test_a_feed_and_an_article_served_with_a_hostile_charset_still_give_a_report(h, charset):
+    h.site.pages["/h/feed"] = (f"application/rss+xml; charset={charset}",
+                               _rss(_item("Cedar 3.0 announced", h.site.url("/h/art"))))
+    h.site.pages["/h/art"] = (f"text/html; charset={charset}",
+                              (SITES / "articles" / "quoted.html").read_bytes())
+    h.write_watch("ai", [h.site.url("/h/feed")])
+    result = h.run()
+    assert result.exit_code == 0, result.output
+    assert "Cedar 3.0 ships a faster scheduler" in h.report()
+
+
+def test_two_release_titles_with_5000_digit_versions_still_give_a_report(h):
+    big = "v" + "1" * 5000
+    h.site.pages["/h/feed"] = ("application/rss+xml", _rss(
+        _item(f"{big}.1", h.site.url("/h/a1")), _item(f"{big}.2", h.site.url("/h/a2"))))
+    h.write_watch("ai", [h.site.url("/h/feed")])
+    result = h.run()
+    assert result.exit_code == 0, result.output
+    assert (h.run_dir / "report.md").is_file()
+
+
+def test_an_unexpected_error_in_one_seed_is_a_failed_source_and_the_run_still_writes_its_report(h, monkeypatch):
+    from topic_radar.readers import feed
+    real = feed.collect
+    bad = h.site.url("/h/bad")
+
+    async def collect_or_blow_up(ctx, source):
+        if source == bad:
+            raise RuntimeError("boom")
+        return await real(ctx, source)
+
+    monkeypatch.setattr(feed, "collect", collect_or_blow_up)
+    h.write_watch("ai", [h.site.url("/run/feed.xml"), bad])
+    result = h.run()
+    assert result.exit_code == 0, result.output
+    assert "Cedar 3.0 ships a faster scheduler" in h.report()
+    assert "something unexpected went wrong reading it" in h.report()
+    assert "RuntimeError: boom" in (h.run_dir / "details" / "error.txt").read_text(encoding="utf-8")

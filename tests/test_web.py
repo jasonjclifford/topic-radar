@@ -179,3 +179,10 @@ async def test_a_redirect_to_a_malformed_address_is_a_fetch_error(site, make_ctx
 async def test_a_charset_python_does_not_know_still_decodes_as_utf8(site, make_ctx, charset):
     got = await fetch(make_ctx(), site.url(f"/feeds/news.atom?ctype={quote(f'application/atom+xml; charset={charset}')}"))
     assert "Harbor News" in got.text
+
+
+@pytest.mark.parametrize("charset", ["undefined", "idna", "base64"])
+async def test_a_header_charset_that_is_not_a_text_codec_still_decodes_as_utf8(site, make_ctx, charset):
+    site.pages["/p"] = (f"text/html; charset={charset}", "caf\u00e9 ok".encode())
+    got = await fetch(make_ctx(), site.url("/p"))
+    assert got.text == "caf\u00e9 ok"

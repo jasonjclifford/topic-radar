@@ -25,6 +25,7 @@ _TYPES = {".xml": "application/xml", ".atom": "application/atom+xml", ".rss": "a
 class Site:
     base: str
     requests: list = field(default_factory=list)  # (method, path) in arrival order
+    pages: dict = field(default_factory=dict)  # path -> (content type, body bytes), served before the files
 
     def url(self, path: str) -> str:
         return self.base + path
@@ -35,6 +36,8 @@ class _Handler(BaseHTTPRequestHandler):
 
     /status/<code>                 that status
     /slow                          answers after 1 second
+    /drip                          a 200 whose body trickles out a byte every 0.1 second, for 20 seconds
+    any path in site.pages         that page, as registered by the test
     /redirect?to=<url>&code=<n>    a redirect (302 by default)
     /head-fails?to=<url>           HEAD gets 405; GET redirects to <url>
     /bytes/<n>?type=<mime>&length=0|1&declare=<m>   n bytes of body; length=0 sends no Content-Length;
@@ -67,7 +70,18 @@ class _Handler(BaseHTTPRequestHandler):
         path = parsed.path
         site.requests.append((self.command, self.path))
         try:
-            if path.startswith("/status/"):
+            if path in site.pages:
+                ctype, body = site.pages[path]
+                self._send(200, ctype, body, send_body=send_body)
+            elif path == "/drip":
+                self.send_response(200)
+                self.send_header("Content-Type", "application/rss+xml")
+                self.end_headers()
+                for _ in range(200):
+                    self.wfile.write(b" ")
+                    self.wfile.flush()
+                    time.sleep(0.1)
+            elif path.startswith("/status/"):
                 self._send(int(path.rsplit("/", 1)[1]), body=b"nope", send_body=send_body)
             elif path == "/slow":
                 time.sleep(1.0)

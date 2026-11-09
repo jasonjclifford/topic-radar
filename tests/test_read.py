@@ -347,3 +347,25 @@ async def test_known_ideas_are_numbered_in_the_read_prompt_and_stories_not_to_re
     _, system, user = model.calls[0]
     assert "1. First idea" in system + user and "2. Second idea" in system + user
     assert len(model.calls) == 1 and skip.items[0].decision == "filtered" and skip.items[0].article == ""
+
+
+async def test_an_unexpected_error_on_one_item_fails_that_item_and_the_other_is_still_read(setup, site, monkeypatch):
+    from topic_radar.steps import read as read_step
+    bad = make_story(site, title="Broken one")
+    good = make_story(site, title="Cedar 3.0 announced")
+    real = read_step._page_text
+
+    async def page_or_blow_up(ctx, item):
+        if item.title == "Broken one":
+            raise RuntimeError("boom")
+        return await real(ctx, item)
+
+    monkeypatch.setattr(read_step, "_page_text", page_or_blow_up)
+    model = ScriptedModel().on("read", "Cedar 3.0 announced", answer(claim()))
+    ctx, state, lines = setup(model, [bad, good])
+    await read(ctx, state)
+    assert (bad.items[0].decision, bad.items[0].article) == ("failed", "")
+    assert "unexpected" in bad.items[0].reason
+    assert good.items[0].eligible and good.items[0].article
+    assert "RuntimeError: boom" in (ctx.run_folder.details / "error.txt").read_text(encoding="utf-8")
+    assert any("Broken one" in line and "unexpected" in line for line in lines)

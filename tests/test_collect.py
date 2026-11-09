@@ -101,3 +101,22 @@ async def test_entries_with_malformed_links_are_dropped_and_the_good_ones_kept(s
     state = await collect(ctx, RunState())
     assert state.failed_sources == []
     assert [i.title for i in state.items] == ["Cedar 3.0 announced", "Plain note"]
+
+
+async def test_an_unexpected_error_in_one_seed_fails_that_seed_and_the_others_still_yield(site, make_ctx, monkeypatch):
+    from topic_radar.readers import feed
+    real = feed.collect
+    bad = site.url("/feeds/blog.xml")
+
+    async def collect_or_blow_up(ctx, source):
+        if source == bad:
+            raise RuntimeError("boom")
+        return await real(ctx, source)
+
+    monkeypatch.setattr(feed, "collect", collect_or_blow_up)
+    ctx = make_ctx(seeds=[bad, site.url("/feeds/news.atom")])
+    state = await collect(ctx, RunState())
+    assert [f.source for f in state.failed_sources] == [bad]
+    assert "unexpected" in state.failed_sources[0].reason
+    assert [i.title for i in state.items] == NEWS_TITLES
+    assert "RuntimeError: boom" in (ctx.run_folder.details / "error.txt").read_text(encoding="utf-8")

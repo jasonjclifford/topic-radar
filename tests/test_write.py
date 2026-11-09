@@ -348,3 +348,27 @@ async def test_a_grouped_stories_quick_hit_line_comes_from_its_quick_hit_item_no
     await write(ctx, state)
     (q,) = state.written.quick
     assert q.line == "Quick second: b words" and q.address == "https://e.test/b"
+
+
+async def test_an_unexpected_error_in_one_story_shows_that_story_as_its_fallback_and_the_other_is_written(setup, monkeypatch):
+    from topic_radar.steps import write as write_step
+    bad, bad_art = make_top(title="Broken one", n=1)
+    good, good_art = make_top(title="Cedar 3.0 announced", n=2)
+    real = write_step._claims_block
+
+    def block_or_blow_up(claims):
+        if claims and claims[0].text == "boom claim":
+            raise RuntimeError("boom")
+        return real(claims)
+
+    monkeypatch.setattr(write_step, "_claims_block", block_or_blow_up)
+    bad_art.claims = [Claim("boom claim", "q", True)]
+    model = ScriptedModel().on("write", "Cedar 3.0 announced", story_answer()).on("summary", "", {"bullets": ["Cedar 3.0 is out."]})
+    ctx, state = setup(model, [(bad, bad_art), (good, good_art)])
+    monkeypatch.setattr("topic_radar.rank.picks", lambda stories: type("P", (), {"top": list(stories), "quick": []})())
+    await write(ctx, state)
+    first, second = state.written.top
+    assert first.fallback and first.headline == "Broken one"
+    assert not second.fallback and second.headline == "Cedar 3.0 ships"
+    assert "RuntimeError: boom" in (ctx.run_folder.details / "error.txt").read_text(encoding="utf-8")
+    assert any("S1" in h and "unexpected" in h for h in state.written.health)

@@ -5,7 +5,7 @@ from urllib.parse import urlsplit
 from ..state import Item, RunState
 from ..web import FetchError, fetch, normalize_address
 
-_VERSION_TITLE = re.compile(r"^v?(\d+(?:\.\d+)+)(?:([-+][0-9A-Za-z.]+))?(?::|$)")
+_VERSION_TITLE = re.compile(r"^v?(\d{1,9}(?:\.\d{1,9})+)(?:([-+][0-9A-Za-z.]+))?(?::|$)")
 
 
 def _version_key(title: str):
@@ -81,8 +81,16 @@ async def normalize(ctx, state: RunState) -> RunState:
     by_source: dict[str, list[Item]] = {}
     for item in fresh:
         by_source.setdefault(item.source, []).append(item)
-    combined = {s: _combine(s, state.feed_titles.get(s, ""), items)
-                for s, items in by_source.items() if _is_release_feed(s, items)}
+    combined = {}
+    for s, items in by_source.items():
+        if not _is_release_feed(s, items):
+            continue
+        try:
+            combined[s] = _combine(s, state.feed_titles.get(s, ""), items)
+        except Exception:  # its items stay ordinary rather than lose the run
+            ctx.run_folder.record_exception(f"combining the releases of {s}")
+            ctx.run_folder.note(f"Couldn't combine the releases in {s}, so each is kept as its own item "
+                                "(details/error.txt has the technical details).")
 
     for c in combined.values():
         c.address = normalize_address(c.address)
@@ -99,7 +107,12 @@ async def normalize(ctx, state: RunState) -> RunState:
             placed.add(item.source)
             out.append(combined[item.source])  # a combined item is never a duplicate: it carries every release
             continue
-        item.address = normalize_address(await resolve_address(ctx, item.address))
+        try:
+            item.address = normalize_address(await resolve_address(ctx, item.address))
+        except Exception:  # the item keeps the address the feed gave
+            ctx.run_folder.record_exception(f"resolving {item.address}")
+            ctx.run_folder.note(f"Couldn't check the address of {item.title}, so it keeps the address as given "
+                                "(details/error.txt has the technical details).")
         if item.address in seen or item.address in claimed:
             continue
         seen.add(item.address)

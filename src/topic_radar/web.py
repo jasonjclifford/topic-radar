@@ -37,7 +37,7 @@ class Fetched:
     def text(self) -> str:
         try:
             return self.body.decode(self.charset, errors="replace")
-        except LookupError:  # a header charset Python has no codec for: utf8mb4, none, binary, ...
+        except (LookupError, ValueError):  # no codec (utf8mb4, none, ...), or one that can't decode text (undefined, idna)
             return self.body.decode("utf-8", errors="replace")
 
 
