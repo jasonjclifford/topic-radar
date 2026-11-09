@@ -41,8 +41,9 @@ def profile(watch) -> str:
 
 
 def known_ideas(ctx) -> list[str]:
-    """The watch's known ideas, cleaned, up to the `known_ideas_max` setting."""
-    return [clean(idea) for idea in ctx.watch.known_ideas[: ctx.settings.known_ideas_max]]
+    """The watch's known ideas, cleaned. Ideas from `already_know` and the hand-added file are never dropped
+    (AC43); the `known_ideas_max` cap is for learned ideas, which don't exist yet."""
+    return [clean(idea) for idea in ctx.watch.known_ideas]
 
 
 def numbered(ideas: list[str]) -> str:

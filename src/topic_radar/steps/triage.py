@@ -5,7 +5,7 @@ from ..state import Item, RunState
 BATCH_SIZE = 10
 SUMMARY_CHARS = 600
 HEADROOM_TOKENS = 1500  # left free for the answer
-CHARS_PER_TOKEN = 4  # the size estimate: no tokenizer, the prompt's characters divided by 4
+CHARS_PER_TOKEN = 3.5  # the size estimate: no tokenizer, the prompt's characters divided by 3.5
 KINDS = ("paper", "release", "rule", "guidance", "news", "opinion", "marketing", "other")
 
 

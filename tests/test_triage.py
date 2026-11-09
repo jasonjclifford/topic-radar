@@ -72,7 +72,7 @@ async def test_a_huge_batch_is_split_until_it_fits(setup):
     items = make_items(10, summary="y" * 600)
     ctx, state, _ = setup(model, items, context=2100)
     await triage(ctx, state)
-    limit_chars = (2100 - 1500) * 4
+    limit_chars = (2100 - 1500) * 3.5
     assert len(model.calls) > 3
     for call in range(len(model.calls)):
         assert len(prompt_of(model, call)) <= limit_chars
@@ -80,11 +80,46 @@ async def test_a_huge_batch_is_split_until_it_fits(setup):
     assert sorted(seen) == sorted(i.title for i in items)  # every item went to the model once
 
 
+async def test_the_size_estimate_is_3_5_characters_per_token_so_a_batch_that_fits_at_4_is_split(setup):
+    items = make_items(2, summary="y" * 500)
+    probe = ScriptedModel().on("triage", "Item title", verdicts((1, 3)))
+    ctx, state, _ = setup(probe, make_items(2, summary="y" * 500))
+    await triage(ctx, state)
+    size = len(prompt_of(probe))  # the whole 2-item prompt
+    context = 1500 + int(size / 4) + 2  # room for it at 4 characters a token, not at 3.5
+    assert size / 4 <= context - 1500 < size / 3.5
+    model = ScriptedModel().on("triage", "Item title", verdicts((1, 3)))
+    ctx, state, _ = setup(model, items, context=context)
+    await triage(ctx, state)
+    assert [len(LINE.findall(user)) for _, _, user in model.calls] == [1, 1]
+
+
 async def test_a_batch_that_fits_is_not_split(setup):
     model = ScriptedModel().on("triage", "Item title", verdicts((1, 3)))
     ctx, state, _ = setup(model, make_items(10, summary="y" * 600), context=8192)
     await triage(ctx, state)
     assert len(model.calls) == 1
+
+
+async def test_ideas_from_already_know_are_never_dropped_by_the_known_ideas_cap(setup):
+    model = ScriptedModel().on("triage", "Item title", verdicts((1, 3)))
+    ideas = [f"idea number {n}" for n in range(1, 86)]
+    ctx, state, _ = setup(model, make_items(1), known=ideas, known_ideas_max=80)
+    await triage(ctx, state)
+    assert "85. idea number 85" in prompt_of(model)
+
+
+async def test_the_not_interested_line_reaches_the_prompt_only_when_set(setup):
+    model = ScriptedModel().on("triage", "Item title", verdicts((1, 3)))
+    ctx, state, _ = setup(model, make_items(1))
+    ctx.watch.not_interested = "crypto hype"
+    await triage(ctx, state)
+    assert "Not interested in: crypto hype" in prompt_of(model)
+    model = ScriptedModel().on("triage", "Item title", verdicts((1, 3)))
+    ctx, state, _ = setup(model, make_items(1))
+    ctx.watch.not_interested = "  "
+    await triage(ctx, state)
+    assert "Not interested in" not in prompt_of(model)
 
 
 async def test_closing_tag_in_a_summary_reaches_the_prompt_neutralized(setup):
