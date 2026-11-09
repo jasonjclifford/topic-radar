@@ -4,11 +4,11 @@
 
 ## Problem
 
-Keeping up with a technical field means checking the same sites every week, working out what's new since last time, and deciding what deserves real reading time. It's a chore of an hour or more, and it's easy to miss things or to read things that didn't matter.
+Keeping up with a technical field means checking the same sites again and again, working out what's new since last time, and deciding what deserves real reading time. It's a chore of an hour or more, and it's easy to miss things or to read things that didn't matter.
 
 ## What the MVP is
 
-The smallest version that does the weekly chore end to end, on a 16 GB laptop, on macOS or Windows, with a local model:
+The smallest version that does the chore end to end, on a 16 GB laptop, on macOS or Windows, with a local model:
 
 - reads **RSS/Atom feeds** found from the sites I name,
 - keeps a **cursor per feed** and a **history** so only new things count,
@@ -23,7 +23,7 @@ It runs from the command line, by hand. Everything else in the full design (web 
 
 | # | Objective |
 |---|---|
-| O1 | A useful weekly report: new items from my sources, ranked by my interests, readable in under 5 minutes, with a clear pointer to what to read in full |
+| O1 | A useful report each run: new items from my sources, ranked by my interests, readable in under 5 minutes, with a clear pointer to what to read in full |
 | O2 | Only new things: a repeat is never shown as new; a changed item is shown as an update |
 | O3 | Nothing invented: no fact without a quote from its source, no link the model typed |
 | O4 | I can see what it did, with only Finder or File Explorer, a text editor and a spreadsheet |
@@ -37,14 +37,14 @@ Each criterion is checked by running the tool (offline tests use a local test fe
 
 ### Watches and sources (O1, O4)
 
-- **AC1** A watch file with `name`, `interests`, `not_interested`, `seeds`, and optional `already_know` and `interval` (default `7d`) is loaded from `watches/`. The later-stage fields `searches` and `mode` are accepted, and `notes.md` says they're skipped until a later version. A watch file that is not valid YAML, or lacks `name` or `interests`, is skipped with a message naming the file, the line where known, and the missing field; the other watches still run.
+- **AC1** A watch file with `name`, `interests`, `not_interested`, `seeds`, and optional `already_know` and `first_run_lookback` (default `7d`) is loaded from `watches/`. The later-stage fields `searches` and `mode` are accepted, and `notes.md` says they're skipped until a later version. A watch file that is not valid YAML, or lacks `name` or `interests`, is skipped with a message naming the file, the line where known, and the missing field; the other watches still run.
 - **AC2** `topic-radar init <watch>` turns each seed into proposed feeds: a seed that is itself an RSS or Atom feed is proposed as is; a seed that is an HTML page is proposed as the feeds its `<link rel="alternate">` tags point to; a seed with neither is reported as "no feed found" and nothing is proposed for it.
 - **AC3** `init` asks about each proposed feed (`y` / `n`), shows the feed's title and its newest item's title, and writes each answer to `sources/<watch>.yaml` as `active` or `muted`. Running `init` again only asks about feeds not already in the file.
 - **AC4** A run reads only `active` sources.
 
 ### Knowing what's new (O2)
 
-- **AC5** The first time a source is read, only items published within the watch's `interval` before the run started count as new; older items are recorded in the history as seen, not reported.
+- **AC5** The first time a source is read, only items published within the watch's `first_run_lookback` before the run started count as new; older items are recorded in the history as seen, not reported.
 - **AC6** An item whose normalized address is already in the watch's history is not reported again, unless its feed `updated` date is later than the one recorded, in which case it's reported once as an **update** and labelled so in the report.
 - **AC7** Addresses are normalized before comparing: tracking parameters (`utm_*`, `fbclid`, `gclid`, `mc_cid`, `mc_eid`) are removed, the scheme and host are lowercased, a trailing `/` is dropped, and the address after redirects is used. Two items with the same normalized address in one run are one item.
 - **AC8** Each source's `ETag` and `Last-Modified` are stored and sent on the next request. A `304 Not Modified` gives no items, and `notes.md` records "no change".
@@ -63,7 +63,7 @@ Each criterion is checked by running the tool (offline tests use a local test fe
 
 ### The report (O1, O3)
 
-- **AC18** The report has, in order: "This week in 30 seconds" (3–5 bullets), "Top stories", "Quick hits" (grouped by watch), "Filtered out" (counts by triage reason, with the path to `items.csv`), "What I think you want" (each watch's profile), "Run health", and an empty "Feedback" heading.
+- **AC18** The report has, in order: "In 30 seconds" (3–5 bullets), "Top stories", "Quick hits" (grouped by watch), "Filtered out" (counts by triage reason, with the path to `items.csv`), "What I think you want" (each watch's profile), "Run health", and an empty "Feedback" heading.
 - **AC19** At most 7 top stories, at most 3 from any one watch; at most 15 quick hits. Ranking is relevance, then updates after new items, then the number of sources, then date.
 - **AC20** Every top story has an id (`S1`…), a headline, "What happened", "Why it matters to you", "Read if…", and links to each of its sources. Every quick hit has an id (`Q1`…), one line, and a link.
 - **AC21** The text from the top of the report through Quick hits is at most `word_budget` words (default 1,200). Code enforces it after writing, by removing the lowest-ranked quick hits, then the lowest-ranked top stories, until it fits.
@@ -96,16 +96,19 @@ Each criterion is checked by running the tool (offline tests use a local test fe
 - **AC39** Model calls use the context size from settings (default 8,192), one call at a time, and the run's last call unloads the model (`keep_alive: 0`).
 - **AC40** A run exits with code 0 when it wrote a report, even if some sources failed, and non-zero only when it didn't.
 - **AC41** (Manual, real model.) On a 16 GB Apple silicon Mac, a run over a reference set of about 300 new items with the default settings finishes in 60 minutes or less, and the tool's memory (Ollama plus the tool) stays under 8 GB.
-- **AC42** (Manual, real model.) For a reference week, the report can be read in under 5 minutes, and each of its top stories can be checked against its saved article.
+- **AC42** (Manual, real model.) For a reference run over about 7 days of new items, the report can be read in under 5 minutes, and each of its top stories can be checked against its saved article.
 
 ### Not the same ideas again (O7)
 
 - **AC43** Each watch has a known-ideas list (`known/<watch>.md`), one short idea per line. It's built from three places: the watch's `already_know` text (split into ideas by the model the first time it's seen or whenever it changes), each top story's one-line takeaway once its report is written, and `already know` feedback (the item's takeaway). It keeps the newest `known_ideas_max` ideas (default 80), and it's changed only at the end of a run, like the other state files (AC11).
 - **AC44** Triage sees the watch's known ideas, numbered. When the model answers that an item's main point is known idea *n* and that it adds nothing new, code gives the item the decision `filtered` with the reason "repeats: <idea n>". When the model answers that it's known idea *n* but adds something new (numbers, a new method, a changed result), the item is judged as usual and its reason says what it adds.
 - **AC45** "Filtered out" in the report shows how many items repeated known ideas, and Run health gives the path to `known/<watch>.md`.
-- **AC46** A feed's items that are releases of one project in one run (a GitHub `releases.atom` feed, or a feed whose item titles are version numbers) are combined into one item titled "<project>: <n> releases this week", listing each version and linking each release. It's triaged and read as one item, with the release notes joined in version order.
+- **AC46** A feed's items that are releases of one project in one run (a GitHub `releases.atom` feed, or a feed whose item titles are version numbers) are combined into one item titled "<project>: <n> releases since the last run", listing each version and linking each release. It's triaged and read as one item, with the release notes joined in version order.
 
 ## Non-goals for the MVP
+
+- A schedule or rhythm. Runs can be daily, weekly, monthly or whenever; each picks up from the cursors. Nothing in the tool assumes an interval.
+- Completeness. Some feeds only list their latest items, so a long gap between runs can miss items; AC10 says when that may have happened, and running more often is the remedy.
 
 Each is in the full design and placed on the roadmap:
 

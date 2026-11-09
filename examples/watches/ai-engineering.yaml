@@ -76,4 +76,4 @@ searches:                       # used from stage 2 (wide watches); the MVP note
 
 mode: wide                      # from stage 2: also search the web each run
 
-interval: 7d
+first_run_lookback: 7d          # how far back a source's first run reaches; runs can be as often as you like

@@ -1,6 +1,6 @@
 # Project: topic radar (brainstorm)
 
-A weekly, local-only digest of what's new in topics the user follows. The design is `DESIGN.md`; nothing is built yet.
+A local-only digest, run as often as the user likes, of what's new in topics the user follows. The design is `DESIGN.md`; nothing is built yet.
 
 - **Independent project:** it stands on its own; files and commits refer to nothing outside this repository.
 - **Local only:** Ollama models, Playwright and plain HTTP. No hosted LLM APIs, accounts, API keys or tokens.

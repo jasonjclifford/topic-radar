@@ -47,7 +47,7 @@ seeds:                            # web addresses: feeds or pages that link to f
   - https://ollama.com/blog
 already_know: |                   # optional; things the report shouldn't keep telling me
   - Keep an instruction file with project rules.
-interval: 7d                      # optional, default 7d; how far back the first run reaches
+first_run_lookback: 7d            # optional, default 7d; how far back a source's first run reaches; not a schedule
 searches: []                      # accepted, used from stage 2
 mode: normal                      # accepted, used from stage 2 (wide)
 ```

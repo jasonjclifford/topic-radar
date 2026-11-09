@@ -4,7 +4,7 @@
 
 ## 1. The problem
 
-Every week I check a set of sites and searches to keep up with technical fields: software design, AI research, materials science, regulation in my area (FDA, Federal Register), and so on. The chore is the same each week: open each source, find what's new since last time, decide whether it matters, and decide what's worth actually reading.
+Every so often I check a set of sites and searches to keep up with technical fields: software design, AI research, materials science, regulation in my area (FDA, Federal Register), and so on. The chore is the same each teek: open each source, find what's new since last time, decide whether it matters, and decide what's worth actually reading.
 
 Topic radar does that chore on my laptop and gives me one short report.
 
@@ -14,23 +14,24 @@ Topic radar does that chore on my laptop and gives me one short report.
 
 | # | Goal | How we'll know |
 |---|---|---|
-| G1 | A weekly report I can read in **under 5 minutes** | Report body is about 900–1,200 words; at most 7 top stories; everything else is a one-liner or a count |
+| G1 | A report I can read in **under 5 minutes** | Report body is about 900–1,200 words; at most 7 top stories; everything else is a one-liner or a count |
 | G2 | The report tells me **what's new** and **what's worth more of my time** | Every story has a "Read if…" line and direct links to the source text |
-| G3 | **Only new things**: nothing I saw last week shows up again unless it changed in a way that matters | A cursor per source; a history of items already seen; a check for "this changed" vs "this is a repeat" |
-| G4 | **Runs on a laptop with macOS or Windows**, with a local model (`gemma4:e4b`-class); the target is a laptop with **16 GB of RAM** | A full weekly run finishes in about 30–60 minutes unattended on a 16 GB Apple silicon Mac; the tool itself stays under about 8 GB at its peak, leaving the rest for the system and whatever else is open; the same code and the same files on both systems (8.0, 8.6) |
+| G3 | **Only new things**: nothing I saw in an earlier run shows up again unless it changed in a way that matters | A cursor per source; a history of items already seen; a check for "this changed" vs "this is a repeat" |
+| G4 | **Runs on a laptop with macOS or Windows**, with a local model (`gemma4:e4b`-class); the target is a laptop with **16 GB of RAM** | A run over about 7 days of new items finishes in about 30–60 minutes unattended on a 16 GB Apple silicon Mac; the tool itself stays under about 8 GB at its peak, leaving the rest for the system and whatever else is open; the same code and the same files on both systems (8.0, 8.6) |
 | G5 | **Started by hand or on a schedule**, with no human input mid-run | A **Run now** button, one command, or a scheduled job (launchd on Mac, Task Scheduler on Windows); a failed source doesn't fail the run |
 | G6 | **General**: any topic, not just the ones above | Topics, sources and preferences are data, never code |
-| G7 | **Improves from light feedback**, without me maintaining config | One line of feedback ("more like S2, less vendor marketing") changes next week's report; the learned preferences are written down where I can see them |
+| G7 | **Improves from light feedback**, without me maintaining config | One line of feedback ("more like S2, less vendor marketing") changes the next report; the learned preferences are written down where I can see them |
 | G8 | **Trustworthy**: no invented facts or links | Every link comes from code, never typed by the model; every claim in a story carries a quote that appears word for word in its source |
 | G9 | **I can see what it did** without developer tools | Everything is plain files in folders: Markdown to read, CSV to open in Excel or Numbers, YAML to glance at. No database. Finder, Spotlight, File Explorer or any text search finds a site or an article in any run |
 | G10 | **Nothing to sign up for** | No accounts, API keys or tokens; no services to install besides Ollama. The web is read through a local browser (Playwright) and plain HTTP |
 
 ## 3. Non-goals
 
-- Not a general search engine or a news reader. It reads a bounded set of sources plus a few searches per week.
+- Not a general search engine or a news reader. It reads a bounded set of sources plus a few searches per run.
 - No hosted LLM APIs and no paid or keyed services of any kind.
 - No logins, no paywall workarounds. A paywalled item is reported by title and link only.
-- No real-time alerts. Weekly (or whatever interval I pick) is the rhythm.
+- No real-time alerts. I run it as often as I like (daily, a few times a week, weekly, monthly); each run picks up from where the last one left off.
+- No guarantee of completeness. The cursors make each run start where the last one ended, but some sources only list their latest items, so a long gap between runs can miss things. The tool says when that may have happened (section 5); it doesn't promise to catch everything.
 - Not a multi-user service. One person, one laptop.
 
 ## 4. What I give it
@@ -39,7 +40,7 @@ Three things, all short and in plain language: a watch, confirmation of its sour
 
 ### 4.1 A watch file
 
-One file per area I follow (a "watch"). It's the only file I write, and I rarely touch it after the first week. I don't even have to write it from scratch: `topic-radar new` asks a few questions in plain words ("What do you want to keep up with?", "What should I ignore?", "Any sites you already check?") and writes the file for me.
+One file per area I follow (a "watch"). It's the only file I write, and I rarely touch it after the first few runs. I don't even have to write it from scratch: `topic-radar new` asks a few questions in plain words ("What do you want to keep up with?", "What should I ignore?", "Any sites you already check?") and writes the file for me.
 
 ```yaml
 # watches/fda-devices.yaml
@@ -54,9 +55,9 @@ not_interested: |                        # free text as well
 seeds:                                   # starting places; the tool proposes more (see 4.2)
   - https://www.fda.gov/medical-devices/digital-health-center-excellence
   - https://www.federalregister.gov/agencies/food-and-drug-administration
-searches:                                # web searches run each week through the local browser
+searches:                                # web searches run each time through the local browser
   - "FDA AI-enabled device guidance"
-interval: 7d                             # how far back "new" reaches on the first run, and the expected run rhythm
+first_run_lookback: 7d                   # how far back "new" reaches on a source's first run; not a schedule
 ```
 
 ```yaml
@@ -108,11 +109,11 @@ mode: wide                              # wide = search the web each run; seeds 
 How a wide watch runs, each time:
 
 1. **Write the searches.** The model turns the interests into 8–12 short search queries, varied on purpose: plain terms, technical terms ("sulfide electrolyte", "lithium metal anode cycle life"), and kinds of source ("preprint", "press release", "standard", "rule"). Queries that found nothing relevant for several runs are swapped for new ones; the ones in use are listed in `sources/<watch>.yaml`, so I can see them (and change them if I want, though I never have to).
-2. **Search.** Each query runs in the local browser on a public search engine's results page, limited to results since the last run (the engine's "past week" filter), the first page or two of results only. Several engines can take turns, so no single one sees many queries.
+2. **Search.** Each query runs in the local browser on a public search engine's results page, limited to results since the last run (the engine's date filter closest to that span: past day, week, month), the first page or two of results only. Several engines can take turns, so no single one sees many queries.
 3. **Treat every result like any other item.** Results go through the same steps as feed items (section 7): repeats dropped by address and by history, prefilter, triage, read, cluster. A story covered by many sites becomes one story with the primary source marked.
 4. **Learn the good places.** Each site that produced a relevant item is counted. A site that keeps coming up (say, relevant items in 3 of the last 4 runs) is proposed as a source in Candidate sources, with its feed or listing page if it has one. Once I confirm it, it's read directly every run, which is cheaper and more complete than finding it through search.
 
-So a wide watch tends to narrow on its own: it starts as all search, and over a few weeks the sources that matter become regular sources, while the searches keep casting the net for the new places. I can also mix the two from the start: a normal watch with a few seeds can say `mode: wide` to add the searches on top.
+So a wide watch tends to narrow on its own: it starts as all search, and over a few runs the sources that matter become regular sources, while the searches keep casting the net for the new places. I can also mix the two from the start: a normal watch with a few seeds can say `mode: wide` to add the searches on top.
 
 Limits that keep it polite and on the laptop: at most ~12 queries per wide watch per run, a pause of several seconds between searches, at most ~60 new results per watch going on to triage (ranked by the prefilter), and the same blocked-search rule as everywhere else (skipped and noted, never retried in a loop).
 
@@ -132,15 +133,16 @@ Everything here is **plain web access**: public pages, public feeds, and public 
 | Sitemap (`sitemap.xml`) | the last-modified date per address | Good for sites without feeds; limited to the paths that match the source (`/news/`, `/guidance/`) |
 | Listing page (a "News" or "Guidance documents" page with no feed) | the addresses of items already seen | Read with Playwright as a page outline (7.1); items are pulled out by code (repeated link patterns), with a model fallback that names items by link number |
 | Single living document (a guidance page, a changelog, a "what's new" page) | a fingerprint per section (split at headings, 7.1) | A changed section is the "new item"; the report says what changed, with the old and new text |
-| Web search | the addresses of results already seen | Run in the local Chromium through Playwright, on a public search engine's results page with its "past week" filter; read with the page outline. No API, no key (section 7, step 1) |
+| Web search | the addresses of results already seen | Run in the local Chromium through Playwright, on a public search engine's results page with its date filter; read with the page outline. No API, no key (section 7, step 1) |
 
 Rules every reader follows:
 
 - **Conditional requests**: send `If-None-Match` / `If-Modified-Since` so an unchanged source costs almost nothing.
 - **One address per item**: strip tracking parameters (`utm_*` and the like), follow redirects, keep the final address. That's how repeats are recognized.
-- **A cursor only moves forward after a successful run.** A source that fails keeps its old cursor, so next week catches up instead of skipping.
-- **First run** reads back one `interval` only, so the first report isn't buried in history.
+- **A cursor only moves forward after a successful run.** A source that fails keeps its old cursor, so the next run catches up instead of skipping.
+- **A source's first run** reads back only `first_run_lookback` (default 7 days), so the first report isn't buried in history.
 - **"Changed" vs "repeat"**: an item seen before whose content changed (a proposed rule became final, a paper got a v2) comes back as an update, labelled as such. Otherwise it's never shown twice.
+- **Long gaps can miss items**: a feed that only lists its latest 20 items can't show what fell off it between runs. When a source's oldest listed item is newer than its cursor, the run says items may have been missed for that source. Running more often closes the gap; nothing else promises it.
 - **Polite fetching**: robots.txt respected, one request at a time per site, a small delay between requests, a user agent naming the tool.
 
 Where cursors and history live is in section 8.4: in the sources file and a history spreadsheet, both readable.
@@ -151,17 +153,17 @@ Markdown, plus an HTML version of the same content. Written into the run folder 
 
 ### 6.1 One report for all watches
 
-One combined report each run, not one per watch. The 5-minute budget is for my week, not per topic, and a combined top list forces the tool to rank across topics. To keep one busy watch from crowding out the others, each watch gets at most 3 of the 7 top stories, and each watch always has its own Quick hits group, even if it has no top story that week.
+One combined report each run, not one per watch. The 5-minute budget is for the whole report, not per topic, and a combined top list forces the tool to rank across topics. To keep one busy watch from crowding out the others, each watch gets at most 3 of the 7 top stories, and each watch always has its own Quick hits group, even if it has no top story in that run.
 
 ### 6.2 Shape
 
 | Section | What's in it | Budget |
 |---|---|---|
-| **This week in 30 seconds** | 3–5 bullets across all watches | ~80 words |
+| **In 30 seconds** | 3–5 bullets across all watches | ~80 words |
 | **Top stories** | At most 7. Each: headline, what happened (2–3 sentences), why it matters to me, **Read if…**, links, how many sources covered it, a short id (`S1`…) for feedback | ~100 words each |
 | **Dates to know** | Comment deadlines, effective dates, conferences, release dates, pulled from the items. Sorted by date | one line each |
 | **Quick hits** | Relevant but minor: one line + link each, grouped by watch, at most ~15 | one line each |
-| **Trends** | Themes rising or falling against the last 4–8 runs ("three groups published 2-bit quantization results this week; none last month") | ~80 words |
+| **Trends** | Themes rising or falling against the last 4–8 runs ("three groups published 2-bit quantization results since the last run; none in the month before") | ~80 words |
 | **Filtered out** | Counts per reason ("41 items: drug approvals; 12: funding news"), with a link to the run's `items.csv` to see them all | counts only |
 | **Candidate sources** | New sources the tool wants to add, with why and a sample item | one line each |
 | **What I think you want** | The learned preferences in plain sentences (section 9.3), so I can correct them | ~100 words |
@@ -294,7 +296,7 @@ One model is loaded at a time, and each is unloaded as soon as its steps finish 
 
 The installer runs a short timing test and writes the read cap it measured, so the first run is already sized for the machine.
 
-**Time budget for a weekly run on a 16 GB Apple silicon Mac** (rough):
+**Time budget for a run over about 7 days of new items on a 16 GB Apple silicon Mac** (rough; a run over a shorter span has fewer items and is quicker):
 
 | Step | Count | Time each | Total |
 |---|---|---|---|
@@ -327,7 +329,7 @@ Each run writes one folder, `runs/2026-11-09-0700/`, named by date and time so t
 
 07:00 Started. 3 watches, 31 active sources, 4 searches.
 07:02 Federal Register (FDA): 14 new documents since 2026-11-02.
-07:03 FDA Digital Health Center page: no change since last week.
+07:03 FDA Digital Health Center page: no change since the last run.
 07:05 Example lab blog: could not load (timed out). Nothing skipped: next run reads from 2026-11-02 again.
 07:08 Search "FDA AI-enabled device guidance": 10 results, 3 not seen before.
 07:10 Looked at 418 new items. Kept 62 after the first filter (see items.csv, column "decision").
@@ -396,7 +398,7 @@ topic-radar feedback "S2 more like this; less law-firm posts"
 topic-radar open                              # open the latest report
 topic-radar report runs/2026-11-09-0700       # rebuild a report from a saved run
 topic-radar console                           # the local web page above
-topic-radar schedule weekly monday 07:00      # or: topic-radar schedule off
+topic-radar schedule weekly monday 07:00      # or daily 07:00, or every 3 days; or: topic-radar schedule off
 topic-radar doctor                            # check Ollama, models, browser, folder; say what to fix in plain words
 ```
 
@@ -455,7 +457,7 @@ Choices behind this:
 
 - **Embeddings aren't stored as state.** A run embeds a few hundred items and the liked/disliked examples in seconds, so they're recomputed each run and only cached in `.cache/`. Deleting the cache costs time, never correctness.
 - **Files are written safely**: each file is written to a temporary name and then renamed, so an interrupted run never leaves half a file. State files are only updated at the very end of a successful run (step 9).
-- **Growth is small**: the history grows by a few hundred rows a week (~20,000 rows a year, a few MB). Run folders are the bulk; `topic-radar tidy --keep 26` deletes run folders older than 26 weeks but keeps their `report.md` in `reports/archive/`.
+- **Growth is small**: the history grows by a few hundred rows for each 7 days of new items (~20,000 rows a year, a few MB), however often it runs. Run folders are the bulk; `topic-radar tidy --keep 26` keeps the newest 26 run folders and deletes older ones but keeps their `report.md` in `reports/archive/`.
 - **Trends read past runs' `items.csv` files**, so they need no extra state.
 
 ### 8.5 Finding things
@@ -501,7 +503,7 @@ Ids (`S2` top story, `Q7` quick hit, `C1` candidate source) tie feedback to item
 
 ### 9.2 What happens to it
 
-A model call turns my words into specific changes, and the tool **says back** what it understood: right away on the command line, or at the top of the next report ("Last week you said: …; I changed: …"). Both what I said and what it understood go into `feedback/<watch>.md`:
+A model call turns my words into specific changes, and the tool **says back** what it understood: right away on the command line, or at the top of the next report ("Last time you said: …; I changed: …"). Both what I said and what it understood go into `feedback/<watch>.md`:
 
 ```markdown
 ## 2026-11-09 — from the report of 2026-11-09
@@ -544,7 +546,7 @@ The watch file stays what I wrote; the profile is the tool's reading of it plus 
 
 ### 9.4 Is it getting better?
 
-From feedback alone, per run: how many top stories got 👍 vs 👎, items I pulled out of "Filtered out" (misses), and how often I said "wrong". Shown as one line in Run health. A week I mark as good ("this week was great") is kept as a test case: its run folder is replayed with a changed prompt (the rebuild-from-run-folder path) to check triage didn't get worse.
+From feedback alone, per run: how many top stories got 👍 vs 👎, items I pulled out of "Filtered out" (misses), and how often I said "wrong". Shown as one line in Run health. A run I mark as good ("this one was great") is kept as a test case: its run folder is replayed with a changed prompt (the rebuild-from-run-folder path) to check triage didn't get worse.
 
 ## 10. Risks and how the design handles them
 
@@ -553,7 +555,7 @@ From feedback alone, per run: how many top stories got 👍 vs 👎, items I pul
 | The small model invents facts or links | Verbatim quote check on every claim; links only from code; the write step sees only checked findings; every article read is saved so a story can be checked by hand |
 | The small model misjudges relevance | Loose prefilter + triage that errs on keeping; "Filtered out" and `items.csv` show what was dropped and why; feedback turns misses into examples |
 | Sites without feeds change layout | The listing reader finds items by repeated link patterns, with a model fallback; a source that used to have items and has none twice in a row is flagged in Run health |
-| Search engines block automated browsing | Few searches, slowly paced, in a real browser; a blocked search is skipped and noted, never retried in a loop. Feeds and seed sites carry most of the load, so a week without searches is still a useful report. A wide watch (4.3) leans on search most at the start; the sites it learns become regular sources, so it depends on search less each week |
+| Search engines block automated browsing | Few searches, slowly paced, in a real browser; a blocked search is skipped and noted, never retried in a loop. Feeds and seed sites carry most of the load, so a run without searches is still a useful report. A wide watch (4.3) leans on search most at the start; the sites it learns become regular sources, so it depends on search less with each run |
 | Run takes too long or the laptop sleeps | Read cap tuned from last run's timing; kept awake while running; the scheduler catches up after sleep (launchd on Mac, Task Scheduler's missed-start setting on Windows); state only changes at the end, so an interrupted run is simply run again |
 | The report grows past 5 minutes | Hard word budget enforced by code in the rank step, not left to the model |
 | One watch floods the report | At most 3 of 7 top stories per watch |
@@ -566,10 +568,10 @@ From feedback alone, per run: how many top stories got 👍 vs 👎, items I pul
 | Stage | Delivers | Proves |
 |---|---|---|
 | v0 | Feeds and sitemaps, cursors, triage, read, a plain report from one watch; the run folder with `notes.md`, `items.csv`, `articles/`; offline tests passing on Mac and Windows | The pipeline fits the laptop and the time budget on both systems; the 5-minute report is useful; a non-developer can follow what it did |
-| v1 | Feedback in the report and on the command line; the profile; liked/disliked examples; `topic-radar find` | Feedback changes next week's report; finding past items is easy |
+| v1 | Feedback in the report and on the command line; the profile; liked/disliked examples; `topic-radar find` | Feedback changes the next report; finding past items is easy |
 | v2 | Listing pages, living documents and web search through Playwright; wide watches that start from a topic (4.3); source discovery and candidate sources; several watches in one report | Sources without feeds work; the tool finds sources I didn't seed |
 | v3 | Clustering across sources; trends over runs; "Dates to know"; the installers for both systems, the launcher, the console (home, watches, sources, runs, find, schedule), `topic-radar doctor` | The report reads as stories, not items; someone with no dev setup can install, run and schedule it on Mac or Windows |
-| v4 | The console's Feedback page; replay of good weeks as test cases | Feedback costs a click; prompt changes can be checked |
+| v4 | The console's Feedback page; replay of good runs as test cases | Feedback costs a click; prompt changes can be checked |
 
 ## 12. Decided
 
@@ -589,7 +591,7 @@ From feedback alone, per run: how many top stories got 👍 vs 👎, items I pul
 
 ### 13.1 An agent harness for exploring the data and giving feedback (for example pi)
 
-**Not for the weekly run.** The run stays a fixed pipeline where code owns the loop: fresh prompts, checked answers, code-decided stopping and the quote check (section 7). A general agent loop hands those decisions to the model and lets context build up, which a 4B-class model handles worst; it would also add Node as a second runtime for every user.
+**Not for the run itself.** The run stays a fixed pipeline where code owns the loop: fresh prompts, checked answers, code-decided stopping and the quote check (section 7). A general agent loop hands those decisions to the model and lets context build up, which a 4B-class model handles worst; it would also add Node as a second runtime for every user.
 
 **For exploring and feedback, as an optional add-on.** Because everything is plain files (8.4) and every action is a command (8.3), an agent harness can sit on top with no change to the tool. [pi](https://pi.dev) fits well: a minimal, MIT-licensed harness with a terminal interface, an RPC mode, TypeScript extensions (tools, commands, skills), MCP, local Ollama models, and installers for Mac and Windows. Things it would let a terminal user do:
 
