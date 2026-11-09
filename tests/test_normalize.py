@@ -160,3 +160,11 @@ async def test_the_kept_note_states_the_lookback_in_the_unit_that_reads_naturall
     await run_both(ctx)
     note = next(l for l in (ctx.run_folder.path / "notes.md").read_text(encoding="utf-8").splitlines() if "Kept " in l)
     assert said in note
+
+
+async def test_a_standalone_item_at_a_release_address_never_drops_the_combined_item(site, make_ctx):
+    ctx = make_ctx(seeds=[site.url("/feeds/widget-news.atom"), site.url(WIDGET)])
+    state = await run_both(ctx)
+    assert titles(state) == ["widget: 5 releases since the last run"]
+    (item,) = state.items
+    assert len(item.links) == 5 and "NOTES-0.2.1" in item.notes

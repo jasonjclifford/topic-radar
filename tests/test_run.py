@@ -535,7 +535,7 @@ async def test_run_health_counts_every_scored_item_the_read_step_did_not_read_ev
 WIDGET_TAGS = ["v0.2.1", "v0.9.0", "v0.10.0-rc1", "v0.10.0", "v0.10.1"]  # version order
 
 
-def release_run(h, read_quote):
+def release_run(h, read_quote, earlier=()):
     model = ScriptedModel().on("triage", "", {"items": [{"item": 1, "relevance": 2, "reason": "fits", "kind": "release"}]})
     model.on("read", "releases since the last run", {"claims": [{"claim": "Version 0.10.1 fixes a crash.", "quote": read_quote}]})
     model.on("write", "releases since the last run", {
@@ -543,7 +543,7 @@ def release_run(h, read_quote):
         "read_if": "y", "takeaway": "z"})
     model.on("summary", "", {"bullets": ["Widget 0.10.1 fixes a crash."]})
     h.fake = FakeOllama(model)
-    h.write_watch("ai", [h.site.url("/gh/acme/widget/releases.atom")])
+    h.write_watch("ai", [*(h.site.url(e) for e in earlier), h.site.url("/gh/acme/widget/releases.atom")])
     result = h.run()
     assert result.exit_code == 0, result.output
     return [h.site.url(f"/gh/acme/widget/releases/tag/{t}") for t in WIDGET_TAGS]
@@ -569,3 +569,8 @@ def test_a_combined_release_in_top_stories_links_each_release_in_its_sources(h):
     top = h.report().split("## Top stories")[1].split("## Quick hits")[0]
     assert "Widget ships fixes" in top
     assert set(LINK.findall(top)) == set(releases)
+
+
+def test_an_earlier_seed_linking_a_release_does_not_remove_the_combined_item_from_the_run(h):
+    release_run(h, "no quote", earlier=["/feeds/widget-news.atom"])
+    assert [r["title"] for r in h.rows()] == ["widget: 5 releases since the last run"]

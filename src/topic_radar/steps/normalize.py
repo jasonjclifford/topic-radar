@@ -84,6 +84,11 @@ async def normalize(ctx, state: RunState) -> RunState:
     combined = {s: _combine(s, state.feed_titles.get(s, ""), items)
                 for s, items in by_source.items() if _is_release_feed(s, items)}
 
+    for c in combined.values():
+        c.address = normalize_address(c.address)
+        c.links = [normalize_address(link) for link in c.links]
+    claimed = {link for c in combined.values() for link in c.links} | {c.address for c in combined.values()}
+
     out: list[Item] = []
     seen: set[str] = set()
     placed: set[str] = set()
@@ -92,12 +97,10 @@ async def normalize(ctx, state: RunState) -> RunState:
             if item.source in placed:
                 continue
             placed.add(item.source)
-            item = combined[item.source]
-            item.address = normalize_address(item.address)
-            item.links = [normalize_address(link) for link in item.links]
-        else:
-            item.address = normalize_address(await resolve_address(ctx, item.address))
-        if item.address in seen:
+            out.append(combined[item.source])  # a combined item is never a duplicate: it carries every release
+            continue
+        item.address = normalize_address(await resolve_address(ctx, item.address))
+        if item.address in seen or item.address in claimed:
             continue
         seen.add(item.address)
         out.append(item)

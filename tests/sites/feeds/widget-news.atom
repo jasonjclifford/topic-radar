@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+<title>Link Roundup</title><id>{BASE}/feeds/widget-news.atom</id><updated>2026-11-08T10:00:00Z</updated>
+<entry><title>Widget 0.10.1 is out</title><id>w1</id><link href="{BASE}/gh/acme/widget/releases/tag/v0.10.1"/><updated>2026-11-08T10:00:00Z</updated><summary>Someone linked the release.</summary></entry>
+</feed>
