@@ -15,12 +15,14 @@ def safe_cell(value) -> str:
 
 
 def _report_ids(state: RunState) -> dict[int, str]:
+    """The S and Q ids, given only to the items that were picked (a top story's `top story` items, a quick
+    hit's `quick hit` items), not to the other items grouped with them."""
     ids: dict[int, str] = {}
     if state.written:
         for w in state.written.top:
-            ids.update({id(i): w.id for i in w.story.items})
+            ids.update({id(i): w.id for i in w.story.items if i.decision == "top story"})
         for q in state.written.quick:
-            ids.update({id(i): q.id for i in q.story.items})
+            ids.update({id(i): q.id for i in q.story.items if i.decision == "quick hit"})
     return ids
 
 

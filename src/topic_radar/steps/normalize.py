@@ -1,3 +1,4 @@
+from datetime import timedelta
 import re
 from urllib.parse import urlsplit
 
@@ -63,6 +64,16 @@ async def resolve_address(ctx, address: str) -> str:
     return address
 
 
+def _span(span: timedelta) -> str:
+    """A lookback in whole days when it is one, else in hours: 14 days, 1 day, 12 hours."""
+    seconds = int(span.total_seconds())
+    if seconds % 86400 == 0:
+        n, unit = seconds // 86400, "day"
+    else:
+        n, unit = seconds // 3600, "hour"
+    return f"{n} {unit}" if n == 1 else f"{n} {unit}s"
+
+
 async def normalize(ctx, state: RunState) -> RunState:
     cutoff = ctx.clock() - ctx.watch.first_run_lookback
     fresh = [i for i in state.items if i.published is None or i.published >= cutoff]
@@ -91,6 +102,6 @@ async def normalize(ctx, state: RunState) -> RunState:
         seen.add(item.address)
         out.append(item)
     state.items = out
-    ctx.run_folder.note(f"Kept {len(out)} items from the last {ctx.watch.first_run_lookback.days} days "
+    ctx.run_folder.note(f"Kept {len(out)} items from the last {_span(ctx.watch.first_run_lookback)} "
                         "after removing duplicates.")
     return state

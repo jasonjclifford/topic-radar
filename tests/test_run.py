@@ -11,6 +11,7 @@ from topic_radar import cli, pipeline, rank
 from topic_radar.model.ollama import PreflightError
 from topic_radar.model.scripted import ScriptedModel
 from topic_radar.report.render import render_report
+from topic_radar.steps.assemble import assemble
 from topic_radar.state import (DECISIONS, Article, Claim, FailedSource, Item, QuickHit, RunState, Story, Written,
                                WrittenStory)
 
@@ -362,8 +363,52 @@ async def test_the_empty_state_says_how_many_were_read(render):
     arts = [Article(item=i) for i in items]
     report = render(state_with(*items, written=Written(), articles=arts))
     assert "2 items were read; none had a claim backed by a quote" in report
-    none = render(state_with(make_item(), written=Written()))
-    assert "0 items were read; none had a claim backed by a quote" in none
+
+
+async def test_the_empty_state_with_nothing_read_says_nothing_scored_high_enough(render):
+    report = render(state_with(make_item(), written=Written()))
+    assert "No article was read because no item scored high enough to read" in report
+    assert "0 items were read" not in report and "none had a claim" not in report
+
+
+async def test_the_empty_state_with_failed_reads_points_to_run_health(render):
+    failed = make_item("Broken", "https://e.test/b", decision="failed")
+    report = render(state_with(failed, written=Written()))
+    assert "No article was read" in report and "couldn't be read" in report and "Run health" in report
+    assert "no item scored high enough" not in report
+
+
+async def test_the_empty_state_when_every_read_item_repeated_a_known_idea(render):
+    items = [make_item("One", "https://e.test/1", decision="filtered", reason="repeats: an idea"),
+             make_item("Two", "https://e.test/2", decision="filtered", reason="repeats: another")]
+    report = render(state_with(*items, written=Written(), articles=[Article(item=i) for i in items]))
+    assert "2 articles were read; all repeated ideas you already know" in report
+    assert "none had a claim" not in report
+
+
+async def test_the_empty_state_with_a_mix_of_repeats_and_claimless_reads(render):
+    repeat = make_item("One", "https://e.test/1", decision="filtered", reason="repeats: an idea")
+    plain = make_item("Two", "https://e.test/2")
+    report = render(state_with(repeat, plain, written=Written(), articles=[Article(item=repeat), Article(item=plain)]))
+    assert "2 articles were read: 1 repeated an idea you already know and 1 had no claim backed by a quote" in report
+
+
+async def test_report_ids_in_items_csv_go_only_to_items_that_were_picked(make_ctx):
+    picked = make_item("Picked", "https://e.test/p", decision="top story")
+    grouped_unscored = make_item("Grouped unscored", "https://e.test/g1", decision="not scored")
+    grouped_filtered = make_item("Grouped filtered", "https://e.test/g2", decision="filtered", reason="repeats: x")
+    quick = make_item("Quick", "https://e.test/q", decision="quick hit")
+    quick_mate = make_item("Quick mate", "https://e.test/q2", decision="filtered")
+    top = WrittenStory(id="S1", story=Story([picked, grouped_unscored, grouped_filtered]), headline="H", article="a.md")
+    hit = QuickHit(id="Q1", story=Story([quick, quick_mate]), title="Quick", summary="", address=quick.address, watch="test")
+    state = RunState(items=[picked, grouped_unscored, grouped_filtered, quick, quick_mate],
+                     stories=[top.story, hit.story], feed_titles={FEED: "Build Weekly"},
+                     written=Written(top=[top], quick=[hit]))
+    ctx = make_ctx()
+    await assemble(ctx, state)
+    text = (ctx.run_folder.path / "items.csv").read_bytes().decode("utf-8-sig")
+    ids = {r["title"]: r["report_id"] for r in csv.DictReader(io.StringIO(text))}
+    assert ids == {"Picked": "S1", "Grouped unscored": "", "Grouped filtered": "", "Quick": "Q1", "Quick mate": ""}
 
 
 async def test_a_fallback_story_shows_the_headline_and_its_quoted_claims(render):

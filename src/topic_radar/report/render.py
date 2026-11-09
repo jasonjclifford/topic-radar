@@ -137,6 +137,23 @@ def _health(ctx, state: RunState) -> list[str]:
     return lines
 
 
+def _no_top_stories(state: RunState) -> str:
+    """Why there is no top story, from the cause: nothing read, every read item a repeat, or no claim kept."""
+    read = len(state.articles)
+    if read == 0:
+        if any(i.decision == "failed" for i in state.items):
+            return "No article was read: the items that scored high enough couldn't be read. See Run health."
+        return "No article was read because no item scored high enough to read."
+    repeats = sum(a.item.decision == "filtered" and a.item.reason.startswith("repeats") for a in state.articles)
+    if repeats == read:
+        return f"{_count(read, 'article')} {'was' if read == 1 else 'were'} read; all repeated ideas you already know."
+    if repeats:
+        rest = read - repeats
+        return (f"{_count(read, 'article')} {'was' if read == 1 else 'were'} read: {repeats} repeated "
+                f"{'an idea' if repeats == 1 else 'ideas'} you already know and {rest} had no claim backed by a quote.")
+    return f"{_count(read, 'item')} {'was' if read == 1 else 'were'} read; none had a claim backed by a quote."
+
+
 def render_report(ctx, state: RunState) -> str:
     """The report as Markdown. Links come only from item addresses and only when they are http or https;
     everything from the web or the model is escaped so it cannot add a link, a heading or a tag."""
@@ -154,8 +171,7 @@ def render_report(ctx, state: RunState) -> str:
         for w in written.top:
             out += _top_story(w, state)
     else:
-        out += [f"{_count(len(state.articles), 'item')} {'was' if len(state.articles) == 1 else 'were'} read; "
-                "none had a claim backed by a quote.", ""]
+        out += [_no_top_stories(state), ""]
     out += ["## Quick hits", ""]
     if written and written.quick:
         names = {ctx.watch.slug: ctx.watch.name}

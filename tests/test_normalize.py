@@ -146,3 +146,17 @@ async def test_only_releases_inside_the_lookback_are_combined(site, make_ctx):
     ctx = make_ctx(seeds=[site.url(WIDGET)], lookback=timedelta(days=4))
     state = await run_both(ctx)
     assert [i.title for i in state.items] == ["widget: 3 releases since the last run"]
+
+
+@pytest.mark.parametrize("lookback, said", [
+    (timedelta(hours=12), "from the last 12 hours"),
+    (timedelta(hours=1), "from the last 1 hour "),
+    (timedelta(hours=36), "from the last 36 hours"),
+    (timedelta(days=1), "from the last 1 day "),
+    (timedelta(days=14), "from the last 14 days"),
+])
+async def test_the_kept_note_states_the_lookback_in_the_unit_that_reads_naturally(site, make_ctx, lookback, said):
+    ctx = make_ctx(seeds=[site.url("/feeds/blog.xml")], lookback=lookback)
+    await run_both(ctx)
+    note = next(l for l in (ctx.run_folder.path / "notes.md").read_text(encoding="utf-8").splitlines() if "Kept " in l)
+    assert said in note
