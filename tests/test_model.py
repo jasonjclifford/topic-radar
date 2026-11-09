@@ -270,6 +270,19 @@ async def test_a_retry_that_parses_gives_the_good_answer(folder):
     assert answer.parsed.score == 3 and answer.error == ""
 
 
+async def test_a_retry_keeps_the_first_raw_answer_beside_the_final_one(folder):
+    inner = ScriptedModel().on("triage", "", ["nonsense one", {"score": 3}])
+    await RecordingClient(inner, folder).call("triage", "s", "u", Verdict)
+    assert (folder.details / "triage-001-answer-1.txt").read_text() == "nonsense one"
+    assert json.loads((folder.details / "triage-001-answer.txt").read_text()) == {"score": 3}
+
+
+async def test_a_call_without_a_retry_writes_no_first_attempt_file(folder):
+    inner = ScriptedModel().on("triage", "", {"score": 3})
+    await RecordingClient(inner, folder).call("triage", "s", "u", Verdict)
+    assert sorted(p.name for p in folder.details.glob("triage-001-*")) == ["triage-001-answer.txt", "triage-001-prompt.txt"]
+
+
 async def test_a_good_first_answer_is_not_retried(folder):
     inner = ScriptedModel().on("triage", "", {"score": 3})
     await RecordingClient(inner, folder).call("triage", "s", "u", Verdict)
