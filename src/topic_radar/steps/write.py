@@ -71,7 +71,7 @@ def _fallback(sid: str, story: Story, art: Article | None, claims: list[Claim], 
 async def _write_story(ctx, state: RunState, out: Written, number: int, story: Story) -> WrittenStory:
     sid = f"S{number}"
     art = _article(state, story)
-    claims = [c for c in art.claims if c.kept] if art else []
+    claims = [Claim(strip_addresses(c.text), c.quote, c.kept) for c in art.claims if c.kept] if art else []
     read_item = art.item if art else story.items[0]
     title = _clean(read_item.title)
     ctx.run_folder.note(f"Writing {sid}: {title}")

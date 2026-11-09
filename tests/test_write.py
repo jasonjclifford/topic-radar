@@ -6,6 +6,7 @@ from topic_radar.model.client import Answer
 from topic_radar.model.recording import RecordingClient
 from topic_radar.model.scripted import ScriptedModel
 from topic_radar.state import Article, Claim, Item, RunState, Story
+from topic_radar.report.render import render_report
 from topic_radar.steps.write import write
 from topic_radar.store.runfolder import RunFolder
 
@@ -260,3 +261,41 @@ async def test_picks_run_first_so_the_top_stories_are_the_ranked_eligible_ones(s
     assert [w.id for w in state.written.top] == ["S1", "S2", "S3"]
     assert [w.story.items[0].title for w in state.written.top] == ["Story 1", "Story 2", "Story 3"]
     assert all(s.items[0].decision == "top story" for s, _ in tops)
+
+
+TAINTED_CLAIM = Claim("Cedar 3.0 drops the legacy plugin format, see https://evil.example/path today.",
+                      "The release drops support for the legacy plugin format.", True)
+
+
+def _tainted_top():
+    return make_top(claims=(CLAIM_A, TAINTED_CLAIM))
+
+
+def _assert_fallback_claim_is_clean(ctx, state):
+    (w,) = state.written.top
+    assert w.fallback
+    assert "evil" not in all_text(state.written) and "https://evil" not in "".join(c.text for c in w.claims)
+    assert w.claims[1].text == "Cedar 3.0 drops the legacy plugin format, see today."  # the other words survive
+    assert w.claims[1].quote == TAINTED_CLAIM.quote  # the page's own words are untouched
+    assert "evil" not in render_report(ctx, state)
+
+
+async def test_an_address_in_claim_text_never_reaches_a_number_check_fallback_story(setup):
+    top = _tainted_top()
+    bad = story_answer(what_happened="Builds got 40% faster, with 12 new plugins.")
+    model = ScriptedModel().on("write", top[0].items[0].title, bad).on("summary", "", {"bullets": ["Fine."]})
+    ctx, state = setup(model, [top])
+    await write(ctx, state)
+    assert state.written.top[0].fallback_reason == "number check"
+    _assert_fallback_claim_is_clean(ctx, state)
+
+
+async def test_an_address_in_claim_text_never_reaches_a_failed_write_fallback_story(setup):
+    top = _tainted_top()
+    model = (ScriptedModel().on("write", top[0].items[0].title, "not json at all")
+             .on("summary", "", {"bullets": ["x"]}))
+    ctx, state = setup(model, [top])
+    await write(ctx, state)
+    assert state.written.top[0].fallback_reason == "write call failed"
+    _assert_fallback_claim_is_clean(ctx, state)
+    assert "evil" in state.articles[0].claims[1].text  # the article's own claims are not mutated
