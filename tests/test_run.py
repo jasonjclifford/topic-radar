@@ -444,3 +444,11 @@ def test_an_error_before_the_run_folder_exists_exits_1_with_no_traceback(site, t
     assert "Traceback" not in result.output
     assert "went wrong" in result.output
     assert h.fake.unloads == 1
+
+
+def test_malformed_item_links_never_stop_the_run(h):
+    h.write_watch("ai", [h.site.url("/run/badlinks.xml")])
+    result = h.run()
+    assert result.exit_code == 0, result.output
+    assert "Cedar 3.0 ships a faster scheduler" in h.report()
+    assert {r["title"] for r in h.rows()} == {"Cedar 3.0 announced", "Plain note"}

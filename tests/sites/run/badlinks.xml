@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"><channel>
+<title>Build Weekly</title><link>{BASE}/</link><description>build tooling</description>
+<item><title>Cedar 3.0 announced</title><link>{BASE}/articles/quoted.html</link><pubDate>Sun, 08 Nov 2026 09:00:00 GMT</pubDate><description>Cedar ships a new scheduler.</description></item>
+<item><title>Bad port high</title><link>http://x.example:99999/post</link><pubDate>Sun, 08 Nov 2026 08:00:00 GMT</pubDate></item>
+<item><title>Bad port letters</title><link>http://x.example:abc/post</link><pubDate>Sun, 08 Nov 2026 07:00:00 GMT</pubDate></item>
+<item><title>Bad bracket</title><link>http://[bad/post</link><pubDate>Sun, 08 Nov 2026 06:00:00 GMT</pubDate></item>
+<item><title>Plain note</title><link>{BASE}/posts/equals.html</link><pubDate>Sun, 08 Nov 2026 05:00:00 GMT</pubDate></item>
+</channel></rss>

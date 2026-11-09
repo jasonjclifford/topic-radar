@@ -7,7 +7,7 @@ from urllib.parse import urljoin
 import feedparser
 
 from ..state import Item
-from ..web import FetchError, fetch
+from ..web import FetchError, fetch, is_parseable_address
 from .base import CollectResult
 
 _BLOCKS = {"p", "div", "br", "li", "ul", "ol", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "blockquote",
@@ -67,7 +67,12 @@ async def collect(ctx, source: str) -> CollectResult:
         link = entry.get("link")
         if not link:
             continue
-        address = urljoin(got.url, link)
+        try:
+            address = urljoin(got.url, link)
+        except ValueError:
+            continue
+        if not is_parseable_address(address):  # an entry whose link isn't an address is left out, like one with no link
+            continue
         content = plain_text(entry.content[0].value) if entry.get("content") else ""
         items.append(Item(
             title=plain_text(entry.get("title", "")) or address,

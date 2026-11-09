@@ -92,8 +92,24 @@ async def _pace(ctx, host: str) -> None:
         last[host] = time.monotonic()
 
 
+def is_parseable_address(url: str) -> bool:
+    """True when the address splits into parts, including a port that is a number from 0 to 65535."""
+    try:
+        urlsplit(url).port
+    except ValueError:
+        return False
+    return True
+
+
 async def fetch(ctx, url: str, *, method: str = "GET") -> Fetched:
     """Fetch one address under the guard, following redirects by hand. Raises FetchError."""
+    try:
+        return await _fetch(ctx, url, method)
+    except (ValueError, httpx.InvalidURL):  # a bad port or bracket in the address, or in a redirect's Location
+        raise FetchError("the address is not a valid web address") from None
+
+
+async def _fetch(ctx, url: str, method: str) -> Fetched:
     timeout = ctx.settings.timeout_seconds
     for _ in range(MAX_HOPS + 1):
         await _check_host(ctx, url)

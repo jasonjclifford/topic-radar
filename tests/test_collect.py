@@ -94,3 +94,10 @@ async def test_each_source_is_noted_as_it_is_read_and_a_failure_is_noted_when_it
     assert texts[1].startswith(f"Couldn't read {site.url('/status/500')}: ") and texts[1].endswith(".")
     assert texts[2] == f"Reading feed 2 of 2: {site.url('/feeds/news.atom')}"
     assert texts[3] == "Found 2 items in 1 feed."
+
+
+async def test_entries_with_malformed_links_are_dropped_and_the_good_ones_kept(site, make_ctx):
+    ctx = make_ctx(seeds=[site.url("/run/badlinks.xml")])
+    state = await collect(ctx, RunState())
+    assert state.failed_sources == []
+    assert [i.title for i in state.items] == ["Cedar 3.0 announced", "Plain note"]

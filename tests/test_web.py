@@ -160,3 +160,16 @@ async def test_requests_to_one_host_are_paced(site, make_ctx):
     await fetch(ctx, site.url("/feeds/news.atom"))
     await fetch(ctx, site.url("/feeds/blog.xml"))
     assert time.monotonic() - start >= 0.28
+
+
+@pytest.mark.parametrize("bad", ["http://x.example:99999/", "http://x.example:abc/", "http://[bad/", "http://"])
+async def test_a_malformed_address_is_a_fetch_error_not_a_crash(make_ctx, bad):
+    with pytest.raises(FetchError) as err:
+        await fetch(make_ctx(), bad)
+    assert "Error" not in err.value.reason and "httpx" not in err.value.reason
+
+
+async def test_a_redirect_to_a_malformed_address_is_a_fetch_error(site, make_ctx):
+    start = site.url(f"/redirect?to={quote('http://x.example:99999/')}")
+    with pytest.raises(FetchError):
+        await fetch(make_ctx(), start)
