@@ -7,6 +7,7 @@ from urllib.parse import urljoin
 import feedparser
 
 from ..state import Item
+from ..text import strip_controls
 from ..web import FetchError, fetch, is_parseable_address
 from .base import CollectResult
 
@@ -47,7 +48,7 @@ def plain_text(markup: str) -> str:
     parser.feed(markup or "")
     parser.close()
     lines = (re.sub(r"[ \t\r\f\v]+", " ", line).strip() for line in "".join(parser.parts).split("\n"))
-    return "\n".join(line for line in lines if line)
+    return strip_controls("\n".join(line for line in lines if line))
 
 
 def _published(entry) -> datetime | None:
@@ -75,7 +76,7 @@ async def collect(ctx, source: str) -> CollectResult:
         if not link:
             continue
         try:
-            address = urljoin(got.url, link)
+            address = strip_controls(urljoin(got.url, link))
         except ValueError:
             continue
         if not is_parseable_address(address):  # an entry whose link isn't an address is left out, like one with no link

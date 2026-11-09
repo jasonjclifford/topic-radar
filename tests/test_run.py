@@ -653,3 +653,24 @@ def test_an_unexpected_error_in_one_seed_is_a_failed_source_and_the_run_still_wr
     assert "Cedar 3.0 ships a faster scheduler" in h.report()
     assert "something unexpected went wrong reading it" in h.report()
     assert "RuntimeError: boom" in (h.run_dir / "details" / "error.txt").read_text(encoding="utf-8")
+
+
+def test_terminal_escape_codes_in_a_feed_title_reach_no_output_or_file(h):
+    title = "Cedar 3.0 announced\x1b]0;PWNED\x07 \x1b[31mRED"
+    h.site.pages["/h/feed"] = ("application/rss+xml", _rss(_item(title, h.site.url("/articles/quoted.html"))))
+    h.write_watch("ai", [h.site.url("/h/feed")])
+    result = h.run()
+    assert result.exit_code == 0, result.output
+    assert "Cedar 3.0 announced]0;PWNED [31mRED" in (h.run_dir / "notes.md").read_text(encoding="utf-8")  # not vacuous: the title is there as words
+    seen = {"stdout": result.output}
+    for path in h.run_dir.rglob("*"):
+        if path.is_file():
+            seen[str(path.relative_to(h.run_dir))] = path.read_bytes().decode("utf-8", "replace")
+    assert any(name.startswith("articles/") for name in seen) and "items.csv" in seen
+    for name, text in seen.items():
+        assert "\x1b" not in text and "\x07" not in text, name
+
+
+def test_escape_removes_control_characters():
+    from topic_radar.report.render import escape
+    assert escape("a\x1b[31mb\x07 c") == "a\\[31mb c"

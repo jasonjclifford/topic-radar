@@ -68,3 +68,13 @@ def test_the_folder_works_as_a_path_for_the_run_context(tmp_path):
     rf = RunFolder.create(tmp_path, lambda: NOW, echo=lambda l: None)
     import os
     assert os.fspath(rf) == str(rf.path)
+
+
+def test_control_characters_are_stripped_from_the_notes_file_and_the_echo(tmp_path):
+    echoed = []
+    rf = RunFolder.create(tmp_path, lambda: NOW, echo=echoed.append)
+    rf.note("Reading \x1b]0;PWNED\x07a \x1b[31mfeed\x7f\x9b ok\ttab")
+    written = (rf.path / "notes.md").read_text(encoding="utf-8")
+    for text in (written, "\n".join(echoed)):
+        assert not any(ord(c) < 32 and c not in "\n\t" or 127 <= ord(c) <= 159 for c in text)
+        assert "Reading ]0;PWNEDa [31mfeed ok\ttab" in text

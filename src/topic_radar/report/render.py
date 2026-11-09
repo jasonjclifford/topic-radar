@@ -2,13 +2,14 @@ import re
 from urllib.parse import urlsplit
 
 from ..state import Item, QuickHit, RunState, WrittenStory
+from ..text import strip_controls
 
 _MD_SPECIAL = re.compile(r"([\\`*_\[\]<>@]|(?<=:)(?=//)|(?<=www)(?=\.))")
 
 
 def escape(text: str) -> str:
     """Untrusted text as one line of plain Markdown: nothing in it can start a link, a heading or a tag."""
-    return _MD_SPECIAL.sub(lambda m: "\\" + m.group(), re.sub(r"\s+", " ", text or "")).strip()
+    return _MD_SPECIAL.sub(lambda m: "\\" + m.group(), re.sub(r"\s+", " ", strip_controls(text or ""))).strip()
 
 
 def is_web_address(address: str) -> bool:

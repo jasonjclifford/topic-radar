@@ -166,3 +166,14 @@ async def test_a_feed_at_the_cap_is_not_noted(site, make_ctx):
     state = await collect(ctx, RunState())
     assert len(state.items) == 200
     assert not any("newest" in line for line in lines)
+
+
+async def test_control_characters_in_feed_text_are_removed_from_the_items(site, make_ctx):
+    site.pages["/c"] = ("application/rss+xml", (
+        "<?xml version='1.0'?><rss version='2.0'><channel><title>Fe\x1b[31med</title>"
+        f"<item><title>Ti\x1b]0;PWNED\x07tle</title><link>{site.url('/p')}</link>"
+        "<description>de\x07sc &lt;b&gt;x&lt;/b&gt;&#x1b;</description></item></channel></rss>").encode())
+    state = await collect(make_ctx(seeds=[site.url("/c")]), RunState())
+    (item,) = state.items
+    assert item.title == "Ti]0;PWNEDtle" and item.summary == "desc x"
+    assert state.feed_titles[site.url("/c")] == "Fe[31med"

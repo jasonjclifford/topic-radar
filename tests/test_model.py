@@ -296,3 +296,8 @@ async def test_a_timeout_is_recorded_without_a_retry(folder):
     assert len(inner.calls) == 1
     assert answer.kind == "timeout"
     assert (folder.details / "read-001-prompt.txt").exists()
+
+
+def test_clean_removes_control_characters_but_keeps_words_and_spacing():
+    from topic_radar.model.prompts import clean
+    assert clean("a\x1b[31m red\x07\n  line\x9b") == "a[31m red line"

@@ -5,6 +5,8 @@ from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 
+from ..text import strip_controls
+
 
 def _terminal(line: str) -> None:
     print(line, file=sys.stdout, flush=True)
@@ -45,7 +47,7 @@ class RunFolder:
     def note(self, text: str) -> None:
         """Append plain words to notes.md, each line with its time, and echo each to the terminal."""
         stamp = self.clock().astimezone().strftime("%H:%M:%S")
-        lines = [f"[{stamp}] {part}" for part in str(text).splitlines() or [""]]
+        lines = [f"[{stamp}] {part}" for part in strip_controls(str(text)).splitlines() or [""]]
         with open(self.path / "notes.md", "a", encoding="utf-8") as f:
             for line in lines:
                 f.write(line + "\n")

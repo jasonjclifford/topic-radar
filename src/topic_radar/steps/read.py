@@ -4,7 +4,7 @@ from .. import rank
 from ..model.answers import LenientModel
 from ..model.prompts import clean, idea_numbered, known_ideas, load_prompt, neutralize, numbered, profile
 from ..state import Article, Claim, Item, RunState, Story
-from ..text import chunk_text, extract_text, quote_found
+from ..text import chunk_text, extract_text, quote_found, strip_controls
 from ..web import FetchError, fetch
 
 CLAIMS_PER_CHUNK = 12
@@ -41,7 +41,7 @@ async def _page_text(ctx, item: Item) -> str:
         page = await fetch(ctx, item.address)
     except FetchError as e:
         raise ReadFailed(e.reason) from None
-    text = page.text.strip() if page.content_type == "text/plain" else extract_text(page.text).strip()
+    text = strip_controls(page.text if page.content_type == "text/plain" else extract_text(page.text)).strip()
     if not text:
         raise ReadFailed("no readable text was found on the page")
     return text

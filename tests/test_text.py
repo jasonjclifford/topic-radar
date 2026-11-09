@@ -127,3 +127,4 @@ def test_the_under_prefix_never_pushes_a_chunk_over_the_limit():
 def test_a_single_line_longer_than_the_limit_stays_whole():
     chunks = chunk_text("# Title\n" + "a" * 20 + "\n" + "x" * 80, 50, None)
     assert any("x" * 80 in c for c in chunks) and len(chunks) == 2
+

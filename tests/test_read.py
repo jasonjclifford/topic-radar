@@ -369,3 +369,13 @@ async def test_an_unexpected_error_on_one_item_fails_that_item_and_the_other_is_
     assert good.items[0].eligible and good.items[0].article
     assert "RuntimeError: boom" in (ctx.run_folder.details / "error.txt").read_text(encoding="utf-8")
     assert any("Broken one" in line and "unexpected" in line for line in lines)
+
+
+async def test_control_characters_in_a_plain_text_page_do_not_reach_the_article_file(setup, site):
+    site.pages["/plain"] = ("text/plain", b"Cedar \x1b]0;PWNED\x07drops the legacy plugin format.\n")
+    story = make_story(site, page="/plain")
+    model = ScriptedModel().on("read", "Cedar 3.0 announced", answer())
+    ctx, state, _ = setup(model, [story])
+    await read(ctx, state)
+    text = article_file(ctx, story.items[0]).read_text(encoding="utf-8")
+    assert "Cedar ]0;PWNEDdrops the legacy plugin format." in text and "\x1b" not in text and "\x07" not in text

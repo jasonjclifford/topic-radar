@@ -10,6 +10,14 @@ _CHARS = str.maketrans({"‘": "'", "’": "'", "‚": "'", "‛": "'", "ʼ": "'
                         "―": "-", "−": "-"})
 
 
+_CONTROLS = re.compile(r"[\x00-\x08\x0b-\x1f\x7f-\x9f]")
+
+
+def strip_controls(text: str) -> str:
+    """Remove the control characters that can drive a terminal (escape codes, bell, C1); tab and newline stay."""
+    return _CONTROLS.sub("", text)
+
+
 def extract_text(html: str) -> str:
     """The page's main text as Markdown, headings kept as `#` lines; empty when there is none."""
     return trafilatura.extract(html, output_format="markdown", include_formatting=True) or ""

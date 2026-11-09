@@ -2,6 +2,8 @@ import re
 from pathlib import Path
 from typing import NamedTuple
 
+from ...text import strip_controls
+
 _SPLIT = "=== user ==="
 _TAGS = ("items", "chunk", "article")
 
@@ -29,7 +31,7 @@ def neutralize(text: str, tags: tuple[str, ...] = _TAGS) -> str:
 
 def clean(text: str) -> str:
     """Text for one line of a prompt: delimiter tags neutralized, whitespace collapsed."""
-    return re.sub(r"\s+", " ", neutralize(text)).strip()
+    return re.sub(r"\s+", " ", neutralize(strip_controls(text))).strip()
 
 
 def profile(watch) -> str:
