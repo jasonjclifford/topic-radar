@@ -82,3 +82,15 @@ async def test_a_feed_with_no_entries_is_a_source_with_no_items_not_a_failure(si
     state = await collect(ctx, RunState())
     assert state.failed_sources == []
     assert state.items == []
+
+
+async def test_each_source_is_noted_as_it_is_read_and_a_failure_is_noted_when_it_happens(site, make_ctx):
+    lines = []
+    ctx = make_ctx(seeds=[site.url("/status/500"), site.url("/feeds/news.atom")])
+    ctx.run_folder.echo = lines.append
+    await collect(ctx, RunState())
+    texts = [line.split("] ", 1)[1] for line in lines]
+    assert texts[0] == f"Reading feed 1 of 2: {site.url('/status/500')}"
+    assert texts[1].startswith(f"Couldn't read {site.url('/status/500')}: ") and texts[1].endswith(".")
+    assert texts[2] == f"Reading feed 2 of 2: {site.url('/feeds/news.atom')}"
+    assert texts[3] == "Found 2 items in 1 feed."

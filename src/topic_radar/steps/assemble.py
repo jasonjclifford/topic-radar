@@ -35,11 +35,8 @@ def _rows(state: RunState):
 
 
 async def assemble(ctx, state: RunState) -> RunState:
-    """Write items.csv and report.md, then the closing line of notes.md. A failed source gets its line in
-    notes.md here, so the notes say what the report's Run health says."""
+    """Write items.csv and report.md, then the closing line of notes.md."""
     run = ctx.run_folder
-    for f in state.failed_sources:
-        run.note(f"Couldn't read {f.source}: {f.reason}.")
     with open(run.path / "items.csv", "w", encoding="utf-8-sig", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(COLUMNS)

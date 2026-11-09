@@ -87,4 +87,6 @@ async def normalize(ctx, state: RunState) -> RunState:
         seen.add(item.address)
         out.append(item)
     state.items = out
+    ctx.run_folder.note(f"Kept {len(out)} items from the last {ctx.watch.first_run_lookback.days} days "
+                        "after removing duplicates.")
     return state

@@ -98,7 +98,10 @@ def _filtered_counts(state: RunState) -> list[tuple[str, int]]:
 def _health(ctx, state: RunState) -> list[str]:
     lines = []
     for f in state.failed_sources:
-        lines.append(f"Couldn't read `{f.source.replace('`', chr(39))}`: {escape(f.reason)}. Check the address, or remove it from the watch's seeds.")
+        line = f"Couldn't read `{f.source.replace('`', chr(39))}`: {escape(f.reason)}."
+        if "remove it from" not in f.reason:  # a reason that already says what to do needs no second remedy
+            line += " Check the address, or remove it from the watch's seeds."
+        lines.append(line)
     unscored = sum(i.decision == "not scored" for i in state.items)
     failed = sum(i.decision == "failed" for i in state.items)
     if unscored:

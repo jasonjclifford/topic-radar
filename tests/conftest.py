@@ -12,6 +12,7 @@ import pytest_asyncio
 
 from topic_radar.context import RunContext
 from topic_radar.settings import Settings
+from topic_radar.store.runfolder import RunFolder
 from topic_radar.watch import Watch
 
 SITES = Path(__file__).parent / "sites"
@@ -128,7 +129,7 @@ async def make_ctx(tmp_path):
             watch=Watch(name="Test", slug="test", interests="anything", seeds=list(seeds),
                         first_run_lookback=lookback),
             folder=tmp_path, clock=lambda: NOW, http=client, model=None,
-            run_folder=tmp_path / "run", allow_loopback=allow_loopback,
+            run_folder=RunFolder.create(tmp_path, lambda: NOW, echo=lambda line: None), allow_loopback=allow_loopback,
         )
 
     yield build

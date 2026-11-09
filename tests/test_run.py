@@ -175,6 +175,40 @@ def test_a_failed_source_shows_the_banner_a_notes_line_and_run_health_and_the_ru
     assert any(bad in line and "ouldn't read" in line for line in notes.splitlines())
 
 
+def test_collecting_notes_one_line_per_source_in_seed_order_and_a_failure_when_it_happens(h):
+    good1, bad, good2 = h.site.url("/run/feed.xml"), h.site.url("/status/500"), h.site.url("/feeds/news.atom")
+    h.write_watch("ai", [good1, bad, good2])
+    result = h.run()
+    assert result.exit_code == 0, result.output
+    for text in ((h.run_dir / "notes.md").read_text(encoding="utf-8"), result.output):
+        lines = text.splitlines()
+        reading = [line for line in lines if "Reading feed" in line]
+        assert [line.split("] ", 1)[1] for line in reading] == [
+            f"Reading feed 1 of 3: {good1}", f"Reading feed 2 of 3: {bad}", f"Reading feed 3 of 3: {good2}"]
+        failures = [n for n, line in enumerate(lines) if "Couldn't read" in line]
+        assert len(failures) == 1 and bad in lines[failures[0]] and "500" in lines[failures[0]]
+        first_triage = next(n for n, line in enumerate(lines) if "Triage:" in line)
+        assert lines.index(reading[1]) < failures[0] < lines.index(reading[2]) < first_triage
+
+
+def test_a_not_a_feed_failure_in_run_health_carries_one_remedy(h):
+    page = h.site.url("/feeds/page.html")
+    h.write_watch("ai", [h.site.url("/run/feed.xml"), page])
+    h.run()
+    health = h.report().split("## Run health")[1]
+    line = next(x for x in health.splitlines() if page in x)
+    assert line.count("remove it from") == 1
+
+
+def test_a_500_failure_in_run_health_still_gets_a_remedy(h):
+    bad = h.site.url("/status/500")
+    h.write_watch("ai", [h.site.url("/run/feed.xml"), bad])
+    h.run()
+    health = h.report().split("## Run health")[1]
+    line = next(x for x in health.splitlines() if bad in x)
+    assert "remove it from the watch's seeds" in line
+
+
 def test_a_clean_run_has_no_banner(h):
     h.run()
     assert "couldn't be read" not in h.report().split("## In 30 seconds")[0]

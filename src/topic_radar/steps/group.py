@@ -15,4 +15,5 @@ async def group(ctx, state: RunState) -> RunState:
         else:
             stories.append(Story([item]))
     state.stories = stories
+    ctx.run_folder.note(f"Grouped {len(state.items)} items into {len(stories)} stories.")
     return state
