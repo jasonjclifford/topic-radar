@@ -39,23 +39,24 @@ def _sections(text: str) -> list[tuple[list[str], list[str]]]:
 
 def _split(lines: list[str], path: list[str], limit: int) -> list[str]:
     """Pieces of a section too long for one chunk, cut between lines; every piece after the first
-    starts with `Under: <heading path>`. A line longer than the limit becomes a piece of its own."""
+    starts with `Under: <heading path>` unless that would push it over the limit. A line longer than the
+    limit becomes a piece of its own."""
     prefix = [f"Under: {' > '.join(path)}"] if path else []
     pieces: list[str] = []
     piece: list[str] = []
     size = 0
+    lead = "\n".join(prefix)
     for line in lines:
-        added = len(line) + (1 if piece else 0)
-        if piece and size + added > limit:
+        if piece and size + len(line) + 1 > limit:
             pieces.append("\n".join(piece).strip("\n"))
-            piece, size = list(prefix), len("\n".join(prefix))
+            piece, size = [], 0
+        if not piece:
             if not line.strip():
                 continue
-            added = len(line) + (1 if piece else 0)
-        if not piece and not line.strip():
-            continue
+            if pieces and prefix and len(lead) + 1 + len(line) <= limit:
+                piece, size = list(prefix), len(lead)  # the prefix only goes on when it leaves the piece within the limit
         piece.append(line)
-        size += added
+        size += len(line) + (1 if len(piece) > 1 else 0)
     if "\n".join(piece).strip():
         pieces.append("\n".join(piece).strip("\n"))
     return pieces

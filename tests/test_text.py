@@ -113,3 +113,17 @@ def test_a_quote_with_a_plain_identifier_matches_text_with_markdown_escapes():
 
 def test_a_paraphrase_still_fails_against_text_with_markdown_escapes():
     assert not quote_found("uses max tool calls to stop", "uses max\\_tool\\_calls to stop")
+
+
+def test_the_under_prefix_never_pushes_a_chunk_over_the_limit():
+    text = "# Title\n" + "a" * 20 + "\n" + "b" * 20 + "\n" + "c" * 50 + "\n" + "d" * 37 + "\n" + "e" * 20
+    chunks = chunk_text(text, 50, None)
+    assert all(len(c) <= 50 for c in chunks)
+    assert "c" * 50 in chunks  # exactly at the limit, so the prefix is left off rather than overflow
+    assert "Under: Title\n" + "d" * 37 in chunks  # exactly at the limit with its prefix, so it keeps it
+    assert all(any(line in c for c in chunks) for line in ("a" * 20, "b" * 20, "e" * 20))  # no line lost
+
+
+def test_a_single_line_longer_than_the_limit_stays_whole():
+    chunks = chunk_text("# Title\n" + "a" * 20 + "\n" + "x" * 80, 50, None)
+    assert any("x" * 80 in c for c in chunks) and len(chunks) == 2
