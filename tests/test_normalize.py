@@ -108,6 +108,13 @@ async def test_five_versioned_entries_become_one_combined_item(site, make_ctx):
     assert "Ten" in item.notes
 
 
+async def test_a_combined_item_is_addressed_by_its_newest_release_and_labels_each_link_by_version(site, make_ctx):
+    state = await run_both(make_ctx(seeds=[site.url(WIDGET)]))
+    (item,) = state.items
+    assert item.address == site.url("/gh/acme/widget/releases/tag/v0.10.1")
+    assert item.link_labels == ["v0.2.1", "v0.9.0", "v0.10.0-rc1", "v0.10.0", "v0.10.1"]
+
+
 async def test_a_single_release_stays_an_ordinary_item(site, make_ctx):
     ctx = make_ctx(seeds=[site.url("/gh/acme/solo/releases.atom")])
     state = await run_both(ctx)

@@ -36,16 +36,20 @@ def _combine(source: str, feed_title: str, items: list[Item]) -> Item:
 
     ordered = sorted(items, key=order)
     notes = "\n\n".join(f"{i.title}\n{i.notes or i.summary}".strip() for i in ordered)
-    address = source.removesuffix(".atom") if source.endswith("/releases.atom") else source
+    labels = []
+    for i in ordered:
+        m = _VERSION_TITLE.match(i.title)
+        labels.append(m.group(0).rstrip(":") if m else "release")
     dates = [i.published for i in items if i.published]
     return Item(
         title=f"{_project(source, feed_title)}: {len(items)} releases since the last run",
-        address=address,
+        address=ordered[-1].address,  # a collected release address, never one built from the feed's own
         source=source,
         published=max(dates) if dates else None,
         summary="Releases: " + ", ".join(i.title for i in ordered),
         notes=notes,
         links=[i.address for i in ordered],
+        link_labels=labels,
     )
 
 

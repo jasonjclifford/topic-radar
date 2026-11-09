@@ -45,6 +45,13 @@ def _banner(state: RunState, seeds: int) -> str:
     return f"> **This report is missing things.** {' and '.join(parts)}, so what follows may be incomplete. See Run health.\n"
 
 
+def _releases(item: Item) -> str:
+    """A combined release's own release addresses as links, labelled by version; web addresses only."""
+    labels = item.link_labels + ["release"] * (len(item.links) - len(item.link_labels))
+    parts = [link(label, address) for label, address in zip(labels, item.links) if is_web_address(address)]
+    return "Releases: " + " · ".join(parts) if parts else ""
+
+
 def _top_story(w: WrittenStory, state: RunState) -> list[str]:
     lines = [f"### {w.id}. {escape(w.headline)}", ""]
     if w.fallback:
@@ -62,6 +69,9 @@ def _top_story(w: WrittenStory, state: RunState) -> list[str]:
                else f"{escape(source_name(state, i))} (no link: the address isn't a web address)"
                for i in w.story.items]
     lines.append("Sources: " + " · ".join(sources) + "  ")
+    releases = [r for r in (_releases(i) for i in w.story.items) if r]
+    if releases:
+        lines.append(" · ".join(releases) + "  ")
     if w.article:
         lines.append(f"Article: `{w.article}`")
     lines.append("")
@@ -70,7 +80,9 @@ def _top_story(w: WrittenStory, state: RunState) -> list[str]:
 
 def _quick_hit(q: QuickHit) -> str:
     head = link(q.title, q.address)
-    return f"- **{q.id}** {head}" + (f": {escape(q.summary)}" if q.summary else "")
+    line = f"- **{q.id}** {head}" + (f": {escape(q.summary)}" if q.summary else "")
+    releases = [r for r in (_releases(i) for i in q.story.items) if r]
+    return line + (" (" + " · ".join(releases) + ")" if releases else "")
 
 
 def filter_reason(item: Item) -> str:

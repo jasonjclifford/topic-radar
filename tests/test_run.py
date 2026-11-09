@@ -468,3 +468,42 @@ async def test_run_health_counts_every_scored_item_the_read_step_did_not_read_ev
     ctx.watch.name = "Build tooling"
     health = render_report(ctx, state).split("## Run health")[1]
     assert "1 article was read; 18 scored items were not read." in health
+
+
+WIDGET_TAGS = ["v0.2.1", "v0.9.0", "v0.10.0-rc1", "v0.10.0", "v0.10.1"]  # version order
+
+
+def release_run(h, read_quote):
+    model = ScriptedModel().on("triage", "", {"items": [{"item": 1, "relevance": 2, "reason": "fits", "kind": "release"}]})
+    model.on("read", "releases since the last run", {"claims": [{"claim": "Version 0.10.1 fixes a crash.", "quote": read_quote}]})
+    model.on("write", "releases since the last run", {
+        "headline": "Widget ships fixes", "what_happened": "Version 0.10.1 fixes a crash.", "why_it_matters": "x",
+        "read_if": "y", "takeaway": "z"})
+    model.on("summary", "", {"bullets": ["Widget 0.10.1 fixes a crash."]})
+    h.fake = FakeOllama(model)
+    h.write_watch("ai", [h.site.url("/gh/acme/widget/releases.atom")])
+    result = h.run()
+    assert result.exit_code == 0, result.output
+    return [h.site.url(f"/gh/acme/widget/releases/tag/{t}") for t in WIDGET_TAGS]
+
+
+def test_a_combined_release_in_quick_hits_links_each_release_and_nothing_synthesized(h):
+    releases = release_run(h, "this quote is not in the notes at all, so the claim is dropped")
+    report = h.report()
+    quick = report.split("## Quick hits")[1].split("## Filtered out")[0]
+    assert "releases since the last run" in quick
+    targets = LINK.findall(quick)
+    assert set(releases) <= set(targets)
+    assert set(targets) == set(releases)  # no link built from the feed address
+    labels = re.findall(r"(?<!\\)\[([^\]]*)\]\(<[^>]*/releases/tag/", quick)
+    assert labels[0].startswith("widget: 5 releases")  # the title links to the newest release
+    assert labels[1:] == ["v0.2.1", "v0.9.0", "v0.10.0-rc1", "v0.10.0", "v0.10.1"]
+    assert {r["address"] for r in h.rows()} <= set(releases)
+    assert h.site.url("/gh/acme/widget/releases.atom") not in " ".join(LINK.findall(report))
+
+
+def test_a_combined_release_in_top_stories_links_each_release_in_its_sources(h):
+    releases = release_run(h, "NOTES-0.10.1 fixes a crash.")
+    top = h.report().split("## Top stories")[1].split("## Quick hits")[0]
+    assert "Widget ships fixes" in top
+    assert set(LINK.findall(top)) == set(releases)

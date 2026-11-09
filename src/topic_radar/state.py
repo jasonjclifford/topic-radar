@@ -15,7 +15,8 @@ class Item:
     decision: str = "not scored"
     reason: str = ""
     notes: str = ""  # the feed's own full text for the entry (plain), when it carries one
-    links: list[str] = field(default_factory=list)  # a combined item's release addresses, in version order
+    links: list[str] = field(default_factory=list)  # a combined item's release addresses, in version order; its `address` is the newest of them
+    link_labels: list[str] = field(default_factory=list)  # a combined item's version names, parallel to `links`
     watch: str = ""  # the slug of the watch that found it (set by triage)
     relevance: int | None = None  # triage's 0-3, None until scored
     kind: str = ""  # triage's kind (paper, release, rule, guidance, news, opinion, marketing, other)
