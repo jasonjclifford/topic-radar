@@ -1,6 +1,6 @@
 # Topic radar — design brainstorm
 
-**Status: brainstorm.** Nothing is built yet. The shape: one process on a laptop, a local Ollama model, a fresh prompt for every model call, structured answers checked by code, and code (not the model) deciding when to stop.
+**Status: brainstorm; the full design.** Nothing is built yet. The first version to build is the MVP in [`mvp/spec.md`](mvp/spec.md); [`ROADMAP.md`](ROADMAP.md) shows how it grows into everything here. The shape: one process on a laptop, a local Ollama model, a fresh prompt for every model call, structured answers checked by code, and code (not the model) deciding when to stop.
 
 ## 1. The problem
 
@@ -560,6 +560,8 @@ From feedback alone, per run: how many top stories got 👍 vs 👎, items I pul
 | Files get edited by hand and break | Every state file the tool reads is checked when loaded; a broken one is reported in plain words with its line number, and the run continues with the other watches |
 
 ## 11. Building it in stages
+
+[`ROADMAP.md`](ROADMAP.md) replaces this table: it starts from a smaller MVP and orders the stages differently. Kept here for the history of the idea.
 
 | Stage | Delivers | Proves |
 |---|---|---|
