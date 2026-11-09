@@ -28,7 +28,7 @@ src/topic_radar/
   watch.py               # load and check watch files
   pipeline.py            # the run: the fixed list of steps, the run context
   steps/
-    feedback_in.py       # step 0: read the report's Feedback section
+    feedback_in.py       # step 0: read the report's Feedback section; applied in memory, saved at the end
     collect.py           # step 1: each active source's reader, in turn
     normalize.py         # step 2: normalized addresses, repeats, updates, combined releases
     triage.py            # step 3: model, batches of titles
@@ -75,13 +75,15 @@ STEPS = [feedback_in, collect, normalize, triage, read, group, rank, write, asse
 
 **Run state** (a plain dataclass, replaced by each step): the items with their decisions, triage answers, articles and claims, stories, the picks, the written texts, and the pending state changes (new cursors, history rows, source statuses).
 
-State files are never written during the run. Each step adds to the **pending changes**; only `assemble`, after the report files are written, applies them through `store/` with atomic writes (AC11). The run folder is written as the run goes (prompts, answers, articles, `notes.md`, `events.jsonl`), so an interrupted run still shows how far it got.
+State files are never written during the run, step 0 included: feedback typed in the report is interpreted and applied in memory (profile, mutes, known ideas) and joins the **pending changes**. Each step adds to them; only `assemble`, after the report files are written, applies them through `store/`, each file written to a temporary name and renamed, in the order history, known ideas, feedback and profile, sources, then `reports/latest.*` (AC11). Duplicates are safer than losses, which is why history goes first and cursors last. `init` and the `feedback` command aren't runs and write their own files at once through the same `store/` functions. The run folder is written as the run goes (prompts, answers, articles, `notes.md`, `events.jsonl`), so an interrupted run still shows how far it got.
 
 ### Model calls
 
 All model calls go through `ModelClient.call(step, system, user, schema) -> Answer`, where `Answer` holds the raw text, the parsed result or the parse error, token counts and the time taken. The client writes the prompt and answer to `details/` (AC28). Rules that every step follows:
 
 - Each prompt is built fresh from the run state for that one call: the watch profile, the item or chunk, the instructions. Never earlier messages.
+- Web text goes inside `<items>`, `<chunk>` or `<article>` delimiters, and the system prompt says it's data, never instructions (AC49).
+- `think: false` and `temperature: 0` on every call; a timeout per call (AC39).
 - Answers are requested as JSON matching the step's pydantic schema (Ollama's structured output) and parsed leniently: a number sent as text is accepted, empty placeholder values are treated as missing.
 - One retry on a parse failure, then the step records the failure and moves on.
 - Links are never taken from answers. Triage and read refer to items by their number in the prompt; code maps numbers back to items (AC22).
@@ -100,7 +102,11 @@ def quote_found(quote: str, text: str) -> bool:
 
 ### The word budget (AC21)
 
-`write` produces the texts; `assemble` renders the report, counts words from the top through Quick hits, and while over budget removes the lowest-ranked quick hit, then the lowest-ranked top story, re-rendering each time. Removed items get the decision `filtered` with the reason `over word budget`, so `items.csv` stays true.
+`write` produces the texts; `assemble` renders the report, counts words from the top through Quick hits, and while over budget removes the lowest-ranked quick hit, then the lowest-ranked top story, re-rendering each time. Removed items get the decision `filtered` with the reason `over word budget`, so `items.csv` stays true. If a top story was removed, `write` is called once more for the 30-second summary only.
+
+### The number check (AC50)
+
+After writing, code collects every number in a top story's text (`\d[\d,.]*%?`) and checks each appears in the story's kept claims or quotes. A story that fails is rendered as its headline and its quoted claims, and Run health counts it.
 
 ## Seams
 

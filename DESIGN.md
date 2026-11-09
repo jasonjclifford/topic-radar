@@ -17,7 +17,7 @@ Topic radar does that chore on my laptop and gives me one short report.
 | G1 | A report I can read in **under 5 minutes** | Report body is about 900–1,200 words; at most 7 top stories; everything else is a one-liner or a count |
 | G2 | The report tells me **what's new** and **what's worth more of my time** | Every story has a "Read if…" line and direct links to the source text |
 | G3 | **Only new things**: nothing I saw in an earlier run shows up again unless it changed in a way that matters | A cursor per source; a history of items already seen; a check for "this changed" vs "this is a repeat" |
-| G4 | **Runs on a laptop with macOS or Windows**, with a local model (`gemma4:e4b`-class); the target is a laptop with **16 GB of RAM** | A run over about 7 days of new items finishes in about 30–60 minutes unattended on a 16 GB Apple silicon Mac; the tool itself stays under about 8 GB at its peak, leaving the rest for the system and whatever else is open; the same code and the same files on both systems (8.0, 8.6) |
+| G4 | **Runs on a laptop with macOS or Windows**, with a local model (`gemma4:e4b`-class); the target is a laptop with **16 GB of RAM** | A run over about 7 days of new items finishes in about 30–60 minutes unattended on a 16 GB Apple silicon Mac; the model runs alongside the system and a browser without running out of memory (measured: `gemma4:e4b-mlx` about 8.8 GB resident at 8K context on a 16 GB M4); the same code and the same files on both systems (8.0, 8.6) |
 | G5 | **Started by hand or on a schedule**, with no human input mid-run | A **Run now** button, one command, or a scheduled job (launchd on Mac, Task Scheduler on Windows); a failed source doesn't fail the run |
 | G6 | **General**: any topic, not just the ones above | Topics, sources and preferences are data, never code |
 | G7 | **Improves from light feedback**, without me maintaining config | One line of feedback ("more like S2, less vendor marketing") changes the next report; the learned preferences are written down where I can see them |
@@ -278,9 +278,9 @@ The tool picks the build for the machine it's on (`model: auto`); a watch or the
 
 | Phase | In memory | Rough peak |
 |---|---|---|
-| Collect | the browser (one tab at a time, closed when collect finishes); the model only for the occasional listing page with no structure | ~2 GB, ~6 GB with the model |
+| Collect | the browser (one tab at a time, closed when collect finishes); the model only for the occasional listing page with no structure | ~2 GB, plus the model's size |
 | Prefilter | the embedding model; browser closed | ~1 GB |
-| Triage, read, cluster, write | the `e4b` model with an 8K context; full text is fetched over plain HTTP, the browser reopened only for a page that needs it | ~6 GB |
+| Triage, read, cluster, write | the `e4b` model with an 8K context; full text is fetched over plain HTTP, the browser reopened only for a page that needs it | ~9 GB with `e4b-mlx`, ~6.5 GB with `e2b-mlx` |
 
 One model is loaded at a time, and each is unloaded as soon as its steps finish (`keep_alive: 0` on its last call). Pages and articles are written to the run folder as they're processed, never held all at once. If the system reports memory pressure, the run waits between calls and notes it in `notes.md` rather than pushing on.
 

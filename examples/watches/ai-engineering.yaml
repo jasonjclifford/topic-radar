@@ -10,7 +10,7 @@ interests: |
   new capabilities and how to get the most from them — skills, subagents,
   instruction files, prompts and prompt files, hooks, MCP servers, plan and agent
   modes, background and cloud agents, review workflows. Above all: how to keep
-  cost and usage down without losing quality (model choice per task, context
+  cost and usage down (pricing, plans and usage limits included) without losing quality (model choice per task, context
   size, caching, when to use a subagent, when not to).
 
   Building with models at runtime: agent frameworks (LangGraph and others),
@@ -45,14 +45,14 @@ already_know: |
 seeds:
   # Coding agents
   - https://github.com/anthropics/claude-code/releases.atom      # Claude Code releases
-  - https://www.anthropic.com/engineering                         # Anthropic engineering posts
-  - https://www.anthropic.com/news                                # Anthropic news (models, pricing)
+  - https://www.anthropic.com/engineering                         # Anthropic engineering posts (no feed: waits for stage 2)
+  - https://www.anthropic.com/news                                # Anthropic news, models and pricing (no feed: waits for stage 2)
   - https://github.blog/changelog/label/copilot/                  # GitHub Copilot changes
   - https://code.visualstudio.com/feed.xml                        # VS Code updates (Copilot in the editor)
-  - https://cognition.ai/blog                                     # Devin
+  - https://cognition.ai/blog                                     # Devin (no feed: waits for stage 2)
   # Building with models
   - https://github.com/langchain-ai/langgraph/releases.atom       # LangGraph releases
-  - https://blog.langchain.com/                                   # LangChain and LangGraph posts
+  - https://www.langchain.com/blog/rss.xml                        # LangChain and LangGraph posts (the feed exists but the blog page doesn't link it)
   - https://github.com/ollama/ollama/releases.atom                # Ollama releases
   - https://huggingface.co/blog/feed.xml                          # Hugging Face blog
   - https://openai.com/news/rss.xml                               # OpenAI news

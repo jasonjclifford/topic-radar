@@ -26,11 +26,13 @@ I use coding agents every day (Claude Code, GitHub Copilot in VS Code, Devin) an
 
 ## Sources
 
-The seeds in the watch file are starting points. `topic-radar init` confirms which have feeds; those without a feed (for example a blog with no feed link) are reported as "no feed found" and wait for stage 2, which reads listing pages through the browser.
+The seeds in the watch file are starting points. `topic-radar init` confirms which have feeds; those without a feed are reported as "no feed found" and wait for stage 2, which reads listing pages through the browser.
+
+**Checked on 2026-11-09:** Anthropic news, Anthropic engineering and the Devin blog have no feed, so in the MVP 3 of the 6 coding-agent seeds are missing. The cost is real: a pricing or plan-limit change (T3) reaches the MVP only second-hand, through Simon Willison or Hacker News, usually a day or two later. The LangChain blog's feed exists but isn't linked from the blog page, so the watch seeds the feed's address directly. All other seeds return a feed.
 
 | Group | Seeds | Expected new items per 7 days |
 |---|---|---|
-| Coding agents | Claude Code releases, Anthropic engineering and news, GitHub Copilot changelog, VS Code updates, Devin blog | ~15–25 items, several releases |
+| Coding agents | Claude Code releases, Anthropic engineering and news, GitHub Copilot changelog, VS Code updates, Devin blog | ~15–25 items, several releases (fewer in the MVP: three of these have no feed) |
 | Building with models | LangGraph releases, LangChain blog, Ollama releases, Hugging Face blog, OpenAI news | ~20–30 |
 | First-hand writers | Simon Willison, Latent Space, Hamel Husain, Eugene Yan, Martin Fowler | ~40–60 (Simon Willison posts a lot) |
 | Discussion | Hacker News stories with 300+ points | ~60–80 |

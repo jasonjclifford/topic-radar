@@ -9,7 +9,7 @@ From the MVP ([`mvp/spec.md`](mvp/spec.md)) to the full design ([`DESIGN.md`](DE
 | **3. Hands-off** | `schedule` (launchd on Mac, Task Scheduler on Windows); notifications; keep awake while running; battery rule; read cap set from the last run's times; install scripts for both systems and the launcher; `new` (write a watch from plain questions) | `platform.py`; `cli.py` | 8.1, 8.3, 8.6 |
 | **4. Console** | The local web page for everything after install: home (latest report, Run now), watches, sources (confirm, mute, sample, a wide watch's searches), runs, find, feedback buttons, schedule, **health** (the `doctor` checks with fixes and Try again), **settings**, quick check and tidy buttons; stops by itself after about 30 minutes with no page open | `store/`; `report/` structure | 8.3 |
 | **5. Better judgment** | Embedding prefilter; liked/disliked examples from feedback; source weights; clustering with embeddings; zoom reading for long documents; Dates to know; Trends; an optional larger writing model on 24 GB+ machines | step list; `ModelClient` | 6, 7, 8.1, 9 |
-| **6. Extras** | Replay of good runs as test cases; an Ask box in the console; an agent-harness add-on (for example pi) for exploring and feedback | run folder; `cli.py` | 9.4, 13 |
+| **6. Extras** | Hosted model APIs as an option behind the same model client, for a larger context when small chunks aren't enough; replay of good runs as test cases; an Ask box in the console; an agent-harness add-on (for example pi) for exploring and feedback | run folder; `cli.py` | 9.4, 13 |
 
 ## Gaps in the full design these stages close
 

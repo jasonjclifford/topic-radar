@@ -8,3 +8,7 @@ A local-only digest, run as often as the user likes, of what's new in topics the
 - **Target machine:** 16 GB of RAM; one model and at most one browser tab in memory at a time.
 - **Plain files, no database:** the user may have little dev experience and must be able to see what a run did in Finder or File Explorer, a text editor or a spreadsheet.
 - Python 3.12 with `uv` once code exists. YAML for data examples, with inline comments and no shorthand.
+
+## Project Maturity
+
+This repository is declared at the early maturity level: nothing is built or released yet, and there are no users or stored data to migrate.
