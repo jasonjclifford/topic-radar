@@ -103,3 +103,13 @@ def test_the_twelve_character_boundary():
     assert quote_found("abcdefghijkl", text)
     assert not quote_found("abcdefghijk", text)
     assert normalize_quote("  A’B  ") == "a'b"
+
+
+def test_a_quote_with_a_plain_identifier_matches_text_with_markdown_escapes():
+    text = "The agent uses max\\_tool\\_calls to stop looping, and a\\*b is a \\[link\\]."
+    assert quote_found("uses max_tool_calls to stop", text)
+    assert quote_found("a*b is a [link].", text)
+
+
+def test_a_paraphrase_still_fails_against_text_with_markdown_escapes():
+    assert not quote_found("uses max tool calls to stop", "uses max\\_tool\\_calls to stop")

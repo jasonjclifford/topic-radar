@@ -92,7 +92,9 @@ def chunk_text(text: str, chunk_chars: int, max_chunks: int | None) -> list[str]
 
 
 def normalize_quote(text: str) -> str:
-    """Whitespace collapsed to one space, curly quotes and dashes made plain, lowercase."""
+    """Whitespace collapsed to one space, curly quotes and dashes made plain, Markdown backslash escapes
+    (`\\_`, `\\*`) read as the plain character, lowercase."""
+    text = re.sub(r"\\([!-/:-@\[-`{-~])", r"\1", text)
     return re.sub(r"\s+", " ", text.translate(_CHARS)).strip().lower()
 
 

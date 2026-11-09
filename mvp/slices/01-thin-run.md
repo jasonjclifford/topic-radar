@@ -87,7 +87,7 @@ Code-side check that the test can fail: with the repeat filter disabled and the 
 
 v3 is kept because v4 and v5 add words and no recall. The two facts still missed are a minor bug fix and a one-line `/context` change; the reader's not-interested list names small bug fixes, so leaving the fix out is defensible.
 
-**Finding for a later task (not changed here):** `trafilatura`'s Markdown output escapes underscores (`max_tool_calls` arrives as `max\_tool\_calls`), the model copies the unescaped identifier, and the quote check then drops a correct claim. In the probe this costs one claim in every version. The fix is in `text.normalize_quote` (treat a backslash escape as the plain character), outside this task's files.
+**Finding (fixed in the commit "quote check reads Markdown escapes as plain characters"):** `trafilatura`'s Markdown output escapes underscores (`max_tool_calls` arrives as `max\_tool\_calls`), the model copies the unescaped identifier, and the quote check then drops a correct claim. In the probe this costs one claim in every version. `text.normalize_quote` now treats a backslash escape of Markdown punctuation as the plain character.
 
 ## Deferred
 
