@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"><channel>
+<title>Tech Wire</title><link>{BASE}/</link><description>Tech Wire</description>
+<item><title>Meridian 2 launches with a one million token context window, and lower prices</title><link>{BASE}/scenarios/pages/t7-news-a.html</link><pubDate>Fri, 06 Nov 2026 18:00:00 GMT</pubDate><description>Meridian Labs released its second model today with a much longer context window.</description></item>
+<item><title>Meridian 2 launches with one million token context window and lower prices</title><link>{BASE}/scenarios/pages/t7-news-b.html</link><pubDate>Fri, 06 Nov 2026 19:00:00 GMT</pubDate><description>The second Meridian model takes a million tokens and is cheaper to call.</description></item>
+<item><title>Meridian 2 is here: what developers need to know</title><link>{BASE}/scenarios/pages/t7-news-c.html</link><pubDate>Sat, 07 Nov 2026 08:00:00 GMT</pubDate><description>A short guide to the new Meridian model for people who build with it.</description></item>
+<item><title>Startup Lathe raises 120 million dollars to build an AI coding assistant</title><link>{BASE}/scenarios/pages/t8-funding.html</link><pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate><description>Lathe, a startup building an AI coding assistant, announced a 120 million dollar Series B led by two venture firms.</description></item>
+<item><title>Prism 5 turns text prompts into photorealistic images in two seconds</title><link>{BASE}/scenarios/pages/t9-images.html</link><pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate><description>A new image generation model from Prism Studio produces photorealistic pictures from a text prompt.</description></item>
+</channel></rss>

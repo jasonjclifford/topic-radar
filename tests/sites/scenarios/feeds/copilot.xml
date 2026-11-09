@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"><channel>
+<title>Editor Tips</title><link>{BASE}/</link><description>Editor Tips</description>
+<item><title>10 ways to get more from GitHub Copilot</title><link>{BASE}/scenarios/pages/t4-ten-ways.html</link><pubDate>Sat, 07 Nov 2026 10:00:00 GMT</pubDate><description>Keep an instruction file in your repository, pick the right model for each task, and seven more habits that make Copilot more useful.</description></item>
+</channel></rss>

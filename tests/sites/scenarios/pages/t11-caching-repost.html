@@ -1,0 +1,12 @@
+<!doctype html>
+<html><head><title>How prompt caching cuts the bill on long agent sessions</title></head>
+<body><nav><a href="/">Home</a> <a href="/about">About</a></nav>
+<article>
+<h1>How prompt caching cuts the bill on long agent sessions</h1>
+<h2>The idea</h2>
+<p>Agents send the same instructions and files in every request. Prompt caching lets the provider remember that shared prefix, so repeated input is billed at a lower rate.</p>
+<p>Put the stable parts of the prompt first and the changing parts last, so the cached prefix stays valid from one request to the next.</p>
+<h2>In practice</h2>
+<p>Long sessions benefit most, because the same prefix is reused many times. Short one-off questions barely benefit.</p>
+</article>
+<footer>Written for the test suite; not a real article.</footer></body></html>

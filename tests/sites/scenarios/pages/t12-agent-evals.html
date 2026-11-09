@@ -1,0 +1,16 @@
+<!doctype html>
+<html><head><title>Evaluating coding agents in production: a sampling method and what it found</title></head>
+<body><nav><a href="/">Home</a> <a href="/about">About</a></nav>
+<article>
+<h1>Evaluating coding agents in production: a sampling method and what it found</h1>
+<h2>Method</h2>
+<p>We sample 2 percent of live agent sessions each day and score each one against a rubric of five checks: did it finish, did the tests pass, did it stay inside the allowed files, did it ask when unsure, and was the result reviewed by a person.</p>
+<p>Scoring is done by a model judge. To check the judge, two engineers labelled 200 sessions by hand, and the judge agreed with them on 87 percent of the labels.</p>
+<h2>Results</h2>
+<p>In the first month, 14 percent of sampled sessions failed without any error message, mostly because the agent stopped after a tool call returned an empty result.</p>
+<p>After we changed the tool to return a plain sentence when a result is empty, the silent failure rate fell to 6 percent.</p>
+<p>Judging costs about 0.4 cents per session, so the sample costs less than one engineer-hour a month.</p>
+<h2>Limits</h2>
+<p>The judge is weakest on the check about staying inside the allowed files, where it agreed with people only 71 percent of the time, so we compute that check from the file list instead.</p>
+</article>
+<footer>Written for the test suite; not a real article.</footer></body></html>

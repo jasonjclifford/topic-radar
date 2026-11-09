@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+<id>tag:scenarios.test,2026:Release notes from claude-code</id><title>Release notes from claude-code</title><updated>2026-11-08T10:00:00Z</updated>
+<entry><id>e0</id><updated>2026-11-03T10:00:00Z</updated><link rel="alternate" type="text/html" href="{BASE}/scenarios/gh/claude-code/releases/tag/v2.3.1"/><title>v2.3.1</title>
+<content type="html">&lt;p&gt;Fixed a typo in the /help output.&lt;/p&gt;</content></entry>
+<entry><id>e1</id><updated>2026-11-04T10:00:00Z</updated><link rel="alternate" type="text/html" href="{BASE}/scenarios/gh/claude-code/releases/tag/v2.3.2"/><title>v2.3.2</title>
+<content type="html">&lt;p&gt;Fixed the cursor jumping to the start of the line after pasting a long path.&lt;/p&gt;</content></entry>
+<entry><id>e2</id><updated>2026-11-05T10:00:00Z</updated><link rel="alternate" type="text/html" href="{BASE}/scenarios/gh/claude-code/releases/tag/v2.3.3"/><title>v2.3.3</title>
+<content type="html">&lt;p&gt;Fixed a rare crash when a terminal was resized during startup.&lt;/p&gt;</content></entry>
+<entry><id>e3</id><updated>2026-11-06T10:00:00Z</updated><link rel="alternate" type="text/html" href="{BASE}/scenarios/gh/claude-code/releases/tag/v2.3.4"/><title>v2.3.4</title>
+<content type="html">&lt;p&gt;Fixed the progress spinner staying on screen after a cancelled command.&lt;/p&gt;</content></entry>
+<entry><id>e4</id><updated>2026-11-07T10:00:00Z</updated><link rel="alternate" type="text/html" href="{BASE}/scenarios/gh/claude-code/releases/tag/v2.3.5"/><title>v2.3.5</title>
+<content type="html">&lt;p&gt;Fixed the wrong color for diff lines in the light theme.&lt;/p&gt;</content></entry>
+</feed>

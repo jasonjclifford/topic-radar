@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+<id>tag:scenarios.test,2026:Release notes from relaywork</id><title>Release notes from relaywork</title><updated>2026-11-08T10:00:00Z</updated>
+<entry><id>e0</id><updated>2026-11-07T08:00:00Z</updated><link rel="alternate" type="text/html" href="{BASE}/scenarios/pages/t6-relaywork-parallel.html"/><title>Relaywork 0.9 adds parallel steps</title>
+<content type="html">&lt;p&gt;Relaywork 0.9 can run independent steps at the same time with the new parallel helper.&lt;/p&gt;</content></entry>
+</feed>

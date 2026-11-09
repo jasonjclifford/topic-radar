@@ -1,0 +1,14 @@
+<!doctype html>
+<html><head><title>Relaywork 0.9 adds parallel steps</title></head>
+<body><nav><a href="/">Home</a> <a href="/about">About</a></nav>
+<article>
+<h1>Relaywork 0.9 adds parallel steps</h1>
+<h2>Parallel steps</h2>
+<p>The new parallel helper runs up to 8 independent steps at the same time and waits for all of them before the flow continues. Each step gets its own copy of the shared state.</p>
+<p>When the steps finish, their changes to the shared state are merged by a reducer you provide. If two steps write the same key and no reducer is given, the flow stops with an error instead of keeping one of the values.</p>
+<h2>Checkpoints</h2>
+<p>Checkpoints are now written once per parallel group rather than once per step, which cut checkpoint writes by about two thirds in the project's own benchmark flow.</p>
+<h2>Breaking changes</h2>
+<p>Python 3.10 is no longer supported. The old sequence helper is renamed chain, and the old name prints a warning until 1.0.</p>
+</article>
+<footer>Written for the test suite; not a real article.</footer></body></html>

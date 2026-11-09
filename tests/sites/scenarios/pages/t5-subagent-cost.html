@@ -1,0 +1,16 @@
+<!doctype html>
+<html><head><title>Measuring token cost before and after moving work to subagents</title></head>
+<body><nav><a href="/">Home</a> <a href="/about">About</a></nav>
+<article>
+<h1>Measuring token cost before and after moving work to subagents</h1>
+<h2>The setup</h2>
+<p>I took one research task, finding every caller of a deprecated function across a 400-file repository, and ran it three times in a single long session, then three times with the search handed to subagents.</p>
+<h2>Results</h2>
+<p>In the single session the task used 412,000 tokens on average. With subagents, the main session used 168,000 tokens and the subagents used 131,000 between them, 299,000 in total, which is 27 percent less.</p>
+<p>Wall-clock time fell from 11 minutes to 7 minutes because the searches ran side by side.</p>
+<p>Each subagent spawn cost about 9,000 tokens of fixed overhead for its instructions and tool list.</p>
+<h2>When it paid off</h2>
+<p>Break-even came at roughly three files read per subagent. Below that, the overhead cost more than the isolated context saved.</p>
+<p>On 18 of 20 spot checks the answers were identical. In the other two, the subagent run missed a caller that sat in a generated file.</p>
+</article>
+<footer>Written for the test suite; not a real article.</footer></body></html>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"><channel>
+<title>Field Notes</title><link>{BASE}/</link><description>Field Notes</description>
+<item><title>Measuring token cost before and after moving work to subagents</title><link>{BASE}/scenarios/pages/t5-subagent-cost.html</link><pubDate>Sat, 07 Nov 2026 18:00:00 GMT</pubDate><description>I ran the same research task three times in one session and three times with subagents, and counted every token.</description></item>
+<item><title>Evaluating coding agents in production: a sampling method and what it found</title><link>{BASE}/scenarios/pages/t12-agent-evals.html</link><pubDate>Fri, 06 Nov 2026 14:00:00 GMT</pubDate><description>How we sample live sessions, score them against a five-point rubric, and what the first month of scores showed.</description></item>
+<item><title>First impressions of Meridian 2 after a week of long-context testing</title><link>{BASE}/scenarios/pages/t7-writer.html</link><pubDate>Sat, 07 Nov 2026 20:00:00 GMT</pubDate><description>A week with the new long-context model: where it helped, where it did not, and what it cost.</description></item>
+</channel></rss>

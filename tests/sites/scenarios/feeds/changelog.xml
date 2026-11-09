@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"><channel>
+<title>Agent Vendor Changelog</title><link>{BASE}/</link><description>Agent Vendor Changelog</description>
+<item><title>Claude Code 2.4 adds a PreCompact hook and per-subagent tool limits</title><link>{BASE}/scenarios/pages/t1-precompact-hook.html</link><pubDate>Sun, 08 Nov 2026 09:00:00 GMT</pubDate><description>Release notes for 2.4: a new hook runs before the conversation is compacted, and a subagent can be stopped after a set number of tool calls.</description></item>
+<item><title>Claude Code Max plans move to weekly usage limits with new per-model caps</title><link>{BASE}/scenarios/pages/t3-weekly-limits.html</link><pubDate>Sat, 07 Nov 2026 15:00:00 GMT</pubDate><description>From December 1 the five-hour usage window is replaced by weekly caps per model; the monthly price stays the same.</description></item>
+</channel></rss>

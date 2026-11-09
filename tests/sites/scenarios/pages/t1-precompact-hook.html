@@ -1,0 +1,17 @@
+<!doctype html>
+<html><head><title>Claude Code 2.4 adds a PreCompact hook and per-subagent tool limits</title></head>
+<body><nav><a href="/">Home</a> <a href="/about">About</a></nav>
+<article>
+<h1>Claude Code 2.4 adds a PreCompact hook and per-subagent tool limits</h1>
+<h2>What&#x27;s new in 2.4</h2>
+<p>The new PreCompact hook runs a command just before Claude Code compacts the conversation. The command receives the transcript path on standard input and can print up to 2,000 characters of notes that are kept in the summary.</p>
+<p>A subagent file can now set max_tool_calls. A subagent that reaches 30 tool calls is stopped and returns what it has found so far, which keeps a runaway search from using the whole budget.</p>
+<p>Subagents that do not name a model now use the small model by default instead of the main session's model. Sessions that fan out many subagents should see lower token cost with no change to their files.</p>
+<h2>Hooks</h2>
+<p>The default hook timeout is now 60 seconds, up from 30 seconds, so a slow formatter no longer gets cut off.</p>
+<p>Hooks defined in the old hooks.json file are still read in 2.4, but support for that file ends in 2.6. Move them into settings.json before then.</p>
+<h2>Other changes</h2>
+<p>The /context command now shows how many tokens each running subagent has used.</p>
+<p>Fixed a crash that happened when two hooks wrote to the same log file at the same moment.</p>
+</article>
+<footer>Written for the test suite; not a real article.</footer></body></html>

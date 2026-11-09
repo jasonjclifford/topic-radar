@@ -29,6 +29,29 @@ Web text goes inside delimiters (with literal delimiter tags neutralized) and on
 - Whether "Read if" names the right section (T1, T12) is judged by eye in the run folder.
 - No visual surface: command line and a Markdown file.
 
+## Scenario outcomes (T1–T12)
+
+Written before the real model first ran over the scenario feeds (`tests/sites/scenarios/`), and not changed after. Each scenario's pass rule is evaluated on the run state after the whole pipeline, from the scenario's own item(s). The scenario watch is `tests/scenario_support.py`'s own fresh watch (interests, not-interested and nine known ideas), not a copy of the example watch. The scripted-model test passes every row with a model that answers as the table expects; the real-model test needs 10 of 12 rows to pass with `gemma4:e4b-mlx`.
+
+Terms: **eligible** = the item's story has an item that was scored 2–3, read, and has at least one kept claim. **Quick-hit candidate** = an item of the story was scored 2–3 and read without failing, and the story ends as `top story` or `quick hit` (not `filtered`, not `failed`). **Repeat filter** = decision `filtered` and reason starting `repeats: `.
+
+| # | Item (synthetic) | Expected code decision | Pass rule |
+|---|---|---|---|
+| T1 | A coding-agent release adding a new hook type and a per-subagent tool limit | eligible (top story candidate) | story eligible |
+| T2 | Five patch releases of one coding agent in one `releases.atom`, bug fixes only | combined into one item "<project>: 5 releases since the last run"; filtered or at most a quick hit, never top | exactly one item from that feed, titled with "5 releases since the last run", none of the five release titles as items, and not eligible |
+| T3 | A plan price and usage-limit change for a coding agent | eligible | story eligible |
+| T4 | "10 ways to get more from GitHub Copilot", restating instruction files and model choice | `filtered`, reason "repeats: <known idea 1>" | repeat filter, with the reason naming the instruction-file idea |
+| T5 | A first-hand post measuring token cost before and after moving work to subagents, with numbers | eligible; triage records it as adding to known idea 2 (subagents), so it is not filtered as a repeat | story eligible, and its decision is not the repeat filter |
+| T6 | An agent-framework release (fictional "Relaywork 0.9") with a parallel-steps feature | eligible or quick-hit candidate | story eligible, or a quick-hit candidate |
+| T7 | One model launch covered by the vendor, a first-hand writer and three news sites; three of the five titles are near-identical | the three near-identical titles are one story (grouping, code); the writer's and the fifth title's items stay separate stories; the grouped story is eligible | the vendor item's story holds at least 2 items and at most 3 (the near-identical ones), the other two items are in stories of their own, and the grouped story is eligible |
+| T8 | A funding round for an AI coding startup | `filtered`, not read | decision `filtered`, not scored 2–3, no article |
+| T9 | An image-generation model release | `filtered`, not read | decision `filtered`, not scored 2–3, no article |
+| T10 | A discussion-site thread whose title is a near-copy of T5's post title | grouped with T5's story, not a separate story | the thread item and the T5 item are in the same story, which holds at least 2 items |
+| T11 | An article on prompt caching basics (known idea 6), marked as already known, republished on another site | `filtered`, reason "repeats: <known idea 6>" | repeat filter, with the reason naming the prompt-caching idea |
+| T12 | A first-hand post on evaluating agents in production, with a method and results | eligible or quick-hit candidate | story eligible, or a quick-hit candidate |
+
+Not mechanical: whether "Read if" names the method section (T12) or the part of the release notes to read (T1) is judged by eye in the run folder.
+
 ## Deferred
 
 `init`, cursors, history, conditional requests, broken sources, end-of-run state writes, feedback, profiles, `find`, `doctor`, `open`, HTML report, `report.json`, `sources.csv`, `model: auto`.
