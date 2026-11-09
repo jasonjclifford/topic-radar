@@ -32,8 +32,8 @@ src/topic_radar/
     collect.py           # step 1: each active source's reader, in turn
     normalize.py         # step 2: normalized addresses, repeats, updates, combined releases
     triage.py            # step 3: model, batches of titles
-    read.py              # step 4: model, chunks, quote check, article files
-    group.py             # step 5: near-identical titles into stories
+    group.py             # step 4: near-identical titles into stories (before read: one story is read once)
+    read.py              # step 5: model, chunks, quote check, article files
     rank.py              # step 6: order, caps, picks
     write.py             # step 7: model, story texts and the 30-second summary
     assemble.py          # step 8: report, word budget, notes, CSVs, state update
@@ -68,7 +68,7 @@ tests/
 `pipeline.run(context)` calls the steps in a fixed order. Each step is an `async` function that takes the run context and the run state and returns the new run state. No step decides which step comes next.
 
 ```python
-STEPS = [feedback_in, collect, normalize, triage, read, group, rank, write, assemble]
+STEPS = [feedback_in, collect, normalize, triage, group, read, rank, write, assemble]
 ```
 
 **Run context** (built once, read-only to steps): settings, the watches, the run folder, the model client, the HTTP client, the clock. The clock, model client and HTTP client are passed in, so tests give a fixed time, the scripted model and the test feed server.

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"><channel>
+<title>Build Weekly</title><link>{BASE}/</link><description>build tooling</description>
+<item><title>Cedar 3.0 announced</title><link>{BASE}/articles/quoted.html</link><pubDate>Sun, 08 Nov 2026 09:00:00 GMT</pubDate><description>Cedar ships a new scheduler.</description></item>
+<item><title>Plugin loader notes</title><link>javascript:alert(1)</link><pubDate>Sun, 08 Nov 2026 08:00:00 GMT</pubDate><description>Notes on the loader.</description></item>
+<item><title>[Click me](https://evil.example/pwn) # Heading &lt;b&gt;bold&lt;/b&gt;</title><link>{BASE}/posts/markdown.html</link><pubDate>Sun, 08 Nov 2026 07:00:00 GMT</pubDate><description>Free [gift](https://evil.example/gift) inside.</description></item>
+<item><title>=SUM(1+1)</title><link>{BASE}/posts/equals.html</link><pubDate>Sun, 08 Nov 2026 06:00:00 GMT</pubDate></item>
+<item><title>+1 plan</title><link>{BASE}/posts/plus.html</link><pubDate>Sun, 08 Nov 2026 05:00:00 GMT</pubDate></item>
+<item><title>-5 percent off sale</title><link>{BASE}/posts/minus.html</link><pubDate>Sun, 08 Nov 2026 04:00:00 GMT</pubDate></item>
+<item><title>@handle moved on</title><link>{BASE}/posts/at.html</link><pubDate>Sun, 08 Nov 2026 03:00:00 GMT</pubDate></item>
+</channel></rss>
