@@ -674,3 +674,14 @@ def test_terminal_escape_codes_in_a_feed_title_reach_no_output_or_file(h):
 def test_escape_removes_control_characters():
     from topic_radar.report.render import escape
     assert escape("a\x1b[31mb\x07 c") == "a\\[31mb c"
+
+
+@pytest.mark.parametrize("address, destination", [
+    ("https://e.test/a\\", "https://e.test/a%5C"),
+    ("https://e.test/a\\b\\", "https://e.test/a%5Cb%5C"),
+    ("https://e.test/a\x1bb\x9bc\x7f", "https://e.test/a%1Bb%C2%9Bc%7F"),
+    ("https://e.test/plain?q=1", "https://e.test/plain?q=1"),
+])
+def test_a_link_destination_cannot_end_in_a_backslash_or_carry_control_characters(address, destination):
+    from topic_radar.report.render import link
+    assert link("text", address) == f"[text](<{destination}>)"

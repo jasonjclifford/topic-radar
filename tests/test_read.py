@@ -379,3 +379,44 @@ async def test_control_characters_in_a_plain_text_page_do_not_reach_the_article_
     await read(ctx, state)
     text = article_file(ctx, story.items[0]).read_text(encoding="utf-8")
     assert "Cedar ]0;PWNEDdrops the legacy plugin format." in text and "\x1b" not in text and "\x07" not in text
+
+
+EVIL = "[x](javascript:alert(1))"
+
+
+def fenced(body, heading):
+    """The lines of the fenced block that follows `heading`: (opening fence, content lines, closing fence)."""
+    lines = body.split(heading + "\n\n", 1)[1].splitlines()
+    opening = lines[0].strip()
+    assert set(opening) == {"`"} and len(opening) >= 3, lines[:3]
+    end = next(n for n in range(1, len(lines)) if lines[n].strip() == opening)
+    return opening, lines[1:end], lines[end].strip()
+
+
+async def test_an_untrusted_title_and_claim_are_escaped_and_the_page_text_and_quote_are_fenced(setup, site):
+    site.pages["/evil"] = ("text/plain", f"Intro {EVIL} and more words follow here.\n".encode())
+    story = make_story(site, title="<img src=x> [t](javascript:alert(1))", page="/evil")
+    model = ScriptedModel().on("read", "img src", answer(claim(f"Claim <b>bold</b> {EVIL}", f"Intro {EVIL} and more words")))
+    ctx, state, _ = setup(model, [story])
+    await read(ctx, state)
+    body = article_file(ctx, story.items[0]).read_text(encoding="utf-8")
+    assert body.splitlines()[0] == "# \\<img src=x\\> \\[t\\](javascript:alert(1))"
+    assert "- Claim \\<b\\>bold\\</b\\> \\[x\\](javascript:alert(1))" in body.splitlines()
+    _, content, _ = fenced(body, "## Text")
+    assert content == [f"Intro {EVIL} and more words follow here."]
+    quote_lines = body.split("## Claims")[1].split("## Text")[0].splitlines()
+    at = quote_lines.index("  Quote:")
+    assert quote_lines[at + 1].strip() == "```" and quote_lines[at + 3].strip() == "```"
+    assert quote_lines[at + 2].strip() == f'"Intro {EVIL} and more words"'
+
+
+async def test_the_fence_around_page_text_is_longer_than_any_backtick_run_inside_it(setup, site):
+    site.pages["/ticks"] = ("text/plain", b"Before\n````\n# Injected heading\n````\nAfter the block.\n")
+    story = make_story(site, page="/ticks")
+    model = ScriptedModel().on("read", "Cedar 3.0 announced", answer())
+    ctx, state, _ = setup(model, [story])
+    await read(ctx, state)
+    body = article_file(ctx, story.items[0]).read_text(encoding="utf-8")
+    opening, content, closing = fenced(body, "## Text")
+    assert len(opening) == 5 and closing == opening
+    assert content == ["Before", "````", "# Injected heading", "````", "After the block."]

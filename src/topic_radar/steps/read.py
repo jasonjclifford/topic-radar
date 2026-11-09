@@ -2,6 +2,7 @@ import re
 
 from .. import rank
 from ..model.answers import LenientModel
+from ..report.render import escape
 from ..model.prompts import clean, idea_numbered, known_ideas, load_prompt, neutralize, numbered, profile
 from ..state import Article, Claim, Item, RunState, Story
 from ..text import chunk_text, extract_text, quote_found, strip_controls
@@ -59,15 +60,23 @@ def _file_name(number: int, title: str) -> str:
     return f"{stem}{slug[:room].strip('-') or 'article'}.md"
 
 
+def _fenced(text: str, indent: str = "") -> list[str]:
+    """The text as a fenced code block, the fence longer than any backtick run inside it, each line indented."""
+    fence = "`" * max(3, max((len(run) for run in re.findall(r"`+", text)), default=0) + 1)
+    return [f"{indent}{line}" for line in [fence, *text.splitlines(), fence]]
+
+
 def _article_markdown(art: Article) -> str:
     item = art.item
-    title = re.sub(r"\s+", " ", item.title).strip()
+    title = escape(item.title)
     date = item.published.date().isoformat() if item.published else "unknown"
     kept = [c for c in art.claims if c.kept]
     lines = [f"# {title}", "", f"- Address: {item.address}", f"- Source: {item.source}", f"- Date: {date}",
              f"- Dropped claims: {art.dropped}", "", "## Claims", ""]
-    lines += [f'- {c.text}\n  > "{c.quote}"' for c in kept] or ["(none kept)"]
-    return "\n".join(lines) + f"\n\n## Text\n\n{art.text}\n"
+    for c in kept:
+        lines += [f"- {escape(c.text)}", "  Quote:", *_fenced(f'"{c.quote}"', "  ")]
+    lines += [] if kept else ["(none kept)"]
+    return "\n".join(lines + ["", "## Text", "", *_fenced(art.text)]) + "\n"
 
 
 async def _read_item(ctx, item: Item, known: list[str]) -> tuple[Article, str | None, bool]:

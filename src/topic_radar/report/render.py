@@ -1,10 +1,11 @@
 import re
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 
 from ..state import Item, QuickHit, RunState, WrittenStory
 from ..text import strip_controls
 
 _MD_SPECIAL = re.compile(r"([\\`*_\[\]<>@]|(?<=:)(?=//)|(?<=www)(?=\.))")
+_UNSAFE_DESTINATION = re.compile(r"[\\\x00-\x1f\x7f-\x9f]")
 
 
 def escape(text: str) -> str:
@@ -17,9 +18,14 @@ def is_web_address(address: str) -> bool:
     return parts.scheme in ("http", "https") and bool(parts.netloc) and not re.search(r"[\s<>]", address)
 
 
+def _destination(address: str) -> str:
+    """The address with backslashes and control characters percent-encoded: a trailing backslash would escape the closing `>`."""
+    return _UNSAFE_DESTINATION.sub(lambda m: quote(m.group(), safe=""), address)
+
+
 def link(text: str, address: str) -> str:
     """A Markdown link when the address is http or https; the escaped words alone otherwise."""
-    return f"[{escape(text)}](<{address}>)" if is_web_address(address) else escape(text)
+    return f"[{escape(text)}](<{_destination(address)}>)" if is_web_address(address) else escape(text)
 
 
 def _count(n: int, noun: str) -> str:
