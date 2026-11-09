@@ -98,7 +98,7 @@ class _Handler(BaseHTTPRequestHandler):
                     self._send(404, body=b"missing", send_body=send_body)
                 else:
                     body = file.read_text(encoding="utf-8").replace("{BASE}", site.base).encode()
-                    self._send(200, _TYPES.get(file.suffix, "text/plain"), body, send_body=send_body)
+                    self._send(200, q.get("ctype", _TYPES.get(file.suffix, "text/plain")), body, send_body=send_body)
         except OSError:
             pass  # the client hung up, which is what a refusal looks like from here
 

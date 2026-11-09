@@ -35,7 +35,10 @@ class Fetched:
 
     @property
     def text(self) -> str:
-        return self.body.decode(self.charset, errors="replace")
+        try:
+            return self.body.decode(self.charset, errors="replace")
+        except LookupError:  # a header charset Python has no codec for: utf8mb4, none, binary, ...
+            return self.body.decode("utf-8", errors="replace")
 
 
 def _is_tracking(key: str) -> bool:

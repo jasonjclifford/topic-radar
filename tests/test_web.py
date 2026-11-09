@@ -173,3 +173,9 @@ async def test_a_redirect_to_a_malformed_address_is_a_fetch_error(site, make_ctx
     start = site.url(f"/redirect?to={quote('http://x.example:99999/')}")
     with pytest.raises(FetchError):
         await fetch(make_ctx(), start)
+
+
+@pytest.mark.parametrize("charset", ["utf8mb4", "none", "binary", "bogus-xyz"])
+async def test_a_charset_python_does_not_know_still_decodes_as_utf8(site, make_ctx, charset):
+    got = await fetch(make_ctx(), site.url(f"/feeds/news.atom?ctype={quote(f'application/atom+xml; charset={charset}')}"))
+    assert "Harbor News" in got.text

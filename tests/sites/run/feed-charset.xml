@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"><channel>
+<title>Build Weekly</title><link>{BASE}/</link><description>build tooling</description>
+<item><title>Cedar 3.0 announced</title><link>{BASE}/articles/quoted.html?ctype=text/html%3B%20charset%3Dutf8mb4</link><pubDate>Sun, 08 Nov 2026 09:00:00 GMT</pubDate><description>Cedar ships a new scheduler.</description></item>
+</channel></rss>

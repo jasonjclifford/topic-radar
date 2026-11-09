@@ -574,3 +574,11 @@ def test_a_combined_release_in_top_stories_links_each_release_in_its_sources(h):
 def test_an_earlier_seed_linking_a_release_does_not_remove_the_combined_item_from_the_run(h):
     release_run(h, "no quote", earlier=["/feeds/widget-news.atom"])
     assert [r["title"] for r in h.rows()] == ["widget: 5 releases since the last run"]
+
+
+def test_a_feed_and_an_article_served_with_an_unknown_charset_are_still_read(h):
+    h.write_watch("ai", [h.site.url("/run/feed-charset.xml?ctype=application/rss%2Bxml%3B%20charset%3Dutf8mb4")])
+    result = h.run()
+    assert result.exit_code == 0, result.output
+    assert "Cedar 3.0 ships a faster scheduler" in h.report()
+    assert [r["title"] for r in h.rows()] == ["Cedar 3.0 announced"]
