@@ -52,6 +52,43 @@ Terms: **eligible** = the item's story has an item that was scored 2–3, read, 
 
 Not mechanical: whether "Read if" names the method section (T12) or the part of the release notes to read (T1) is judged by eye in the run folder.
 
+## Real-model results (T1–T12, read prompt)
+
+Run on 2026-11-09 with `gemma4:e4b-mlx` (`uv run pytest -m real_model tests/test_scenarios_real.py -s`), fixed clock, default settings (read cap 25, 4 chunks of 3000 characters), against the outcome table above, which was committed before the first real run and not changed after.
+
+**Score: 12 of 12** (needs 10), with the first read prompt (v0) and with the tuned one (v3). A whole scenario run (about 20 model calls: 2 triage batches, 8 reads, 3 stories, 1 summary) takes 56 to 67 seconds; the recall probe is one call of 5 to 17 seconds.
+
+| # | Result | What the model did |
+|---|---|---|
+| T1 | match | scored 3, read, kept claims: eligible |
+| T2 | match | one combined item, scored 0 ("minor patch releases"): filtered |
+| T3 | match | scored 2, eligible |
+| T4 | match | scored 1, repeat filter naming the instruction-file idea |
+| T5 | match | scored 2–3, "adds to a known idea (subagents)", eligible |
+| T6 | match | scored 2, eligible |
+| T7 | match | three near-identical titles in one story (the other two apart), eligible |
+| T8 | match | scored 0, not read |
+| T9 | match | scored 0, not read |
+| T10 | match | thread grouped with T5's post (2 items) |
+| T11 | match | repeat filter naming the prompt-caching idea (scored 2) |
+| T12 | match | scored 2, eligible |
+
+Code-side check that the test can fail: with the repeat filter disabled and the grouping threshold raised to 101 in the code, the same real run scores 9 of 12 (T4, T7, T10 miss) and the test goes red. The real model alone cannot tell whether the tolerance of two misses hides a weak prompt, so the per-scenario table is printed on every run.
+
+**Read-prompt recall.** A fixed chunk (the T1 page, 1,167 characters, eight facts a reader would want: the new hook, its 2,000-character notes, the 30-tool-call stop, the small-model default, the 60-second hook timeout, the end of `hooks.json` support, the `/context` change, a crash fix). Recall is how many of the eight appear in the quote of a claim whose quote the quote check keeps. One call per version, temperature 0.
+
+| Version | Change | Kept of 8 expected | Claims returned / with a quote found |
+|---|---|---|---|
+| v0 | the Task 5 prompt ("every claim the reader would care about") | 4 | 4 / 3 |
+| v1 | go paragraph by paragraph, one claim per fact, a quote of one sentence | 5 | 6 / 5 |
+| v2 | sentence by sentence; the example answer shows two claims | 5 | 5 / 4 |
+| v3 (kept) | look back over every heading and paragraph, including the last, before answering; one sentence per quote, with backslashes | 6 | 6 to 7 / 5 to 6 |
+| v4, v5 | v3 plus "do not stop early; short sections near the end hold small fixes", and a paragraph count | 6 | 5 / 5 |
+
+v3 is kept because v4 and v5 add words and no recall. The two facts still missed are a minor bug fix and a one-line `/context` change; the reader's not-interested list names small bug fixes, so leaving the fix out is defensible.
+
+**Finding for a later task (not changed here):** `trafilatura`'s Markdown output escapes underscores (`max_tool_calls` arrives as `max\_tool\_calls`), the model copies the unescaped identifier, and the quote check then drops a correct claim. In the probe this costs one claim in every version. The fix is in `text.normalize_quote` (treat a backslash escape as the plain character), outside this task's files.
+
 ## Deferred
 
 `init`, cursors, history, conditional requests, broken sources, end-of-run state writes, feedback, profiles, `find`, `doctor`, `open`, HTML report, `report.json`, `sources.csv`, `model: auto`.

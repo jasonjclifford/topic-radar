@@ -8,9 +8,9 @@ What the reader follows:
 What the reader already knows, numbered:
 {known_ideas}
 
-List every claim the reader would care about: each new feature, number, date, change in behaviour, result or decision. Give at most 12 claims, and skip anything that is only background or advertising. For every claim give:
+Go through the text from the top, sentence by sentence. Every sentence that reports a new feature, a change in behaviour, a number, a limit, a date or deadline, a result, a decision or a fix gets its own claim, so most paragraphs give one or two claims. Never merge two facts into one claim, and never skip a paragraph or a section that has a fact: before you answer, look back over every heading and every paragraph of the text, including the last ones, and add any fact you missed. Give at most 12 claims, and skip anything that is only background or advertising. For every claim give:
 - claim: one plain sentence saying what the article reports
-- quote: one or two sentences copied exactly from the text, character for character, that back the claim. Never reword a quote and never join pieces from different places.
+- quote: exactly one sentence from the text, the one that states the fact, copied character for character with its symbols and backslashes. Never give two sentences. Never reword a quote and never join pieces from different places.
 
 Also give:
 - repeats_idea: the number of the known idea this part's main point repeats, or leave it out
@@ -18,7 +18,7 @@ Also give:
 
 If the text has nothing the reader would care about, answer with an empty list of claims.
 
-Answer with JSON only: {"claims": [{"claim": "...", "quote": "..."}], "repeats_idea": 2, "adds_new": false}
+Answer with JSON only: {"claims": [{"claim": "...", "quote": "..."}, {"claim": "...", "quote": "..."}], "repeats_idea": 2, "adds_new": false}
 === user ===
 Article title: {title}
 
