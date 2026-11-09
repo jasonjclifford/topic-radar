@@ -1,6 +1,6 @@
 # Slice 1 plan — one thin run, start to finish, on real feeds
 
-**Slice:** [`01-thin-run.md`](01-thin-run.md) · **Spec:** [`../spec.md`](../spec.md) · **Status:** ready
+**Slice:** [`01-thin-run.md`](01-thin-run.md) · **Spec:** [`../spec.md`](../spec.md) · **Status:** built (branch `slice-01-thin-run`)
 
 ## Goal
 
@@ -62,9 +62,9 @@ Every step appends lines to `notes.md` (echoed to the terminal) and events to `d
 
 ## Known Unknowns
 
-- [ ] Whether `gemma4:e4b-mlx` reaches 10 of 12 on T1–T12 with these prompts (blocks: Task 8's pass; the code is done without it).
-- [ ] How far the read prompt's claim recall can be raised (blocks: Task 8).
-- [ ] Whether GitHub `releases.atom` entries carry the release notes in `content` that feedparser exposes (blocks: Task 2's real-feed check; offline tests use synthetic Atom).
+- [x] Whether `gemma4:e4b-mlx` reaches 10 of 12 on T1–T12 with these prompts (blocks: Task 8's pass; the code is done without it). Answered: 12 of 12 (slice record, Real-model results).
+- [x] How far the read prompt's claim recall can be raised (blocks: Task 8). Answered: 4 of 8 to 6 of 8 on a fixed chunk (slice record).
+- [x] Whether GitHub `releases.atom` entries carry the release notes in `content` that feedparser exposes (blocks: Task 2's real-feed check; offline tests use synthetic Atom). Answered: yes, as HTML in `content[0].value`, so the notes are converted to plain text.
 
 ## Tasks
 
@@ -219,9 +219,9 @@ Order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8, where 2 and 3 are independen
 
 ## Flow-out
 
-- [ ] Slice record updated with the T1–T12 score, the claim-recall numbers and the real-run summary
-- [ ] `ROADMAP.md`/`spec.md` notes if anything in this slice changed a spec assumption
-- [ ] Scrub grep from `../CLAUDE.md` run before each commit
+- [x] Slice record updated with the T1–T12 score, the claim-recall numbers and the real-run summary
+- [x] `ROADMAP.md`/`spec.md` notes if anything in this slice changed a spec assumption
+- [x] Scrub grep from `../CLAUDE.md` run before each commit
 
 ## Council Review
 

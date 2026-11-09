@@ -1,6 +1,6 @@
 # Slice 1 — one thin run, start to finish, on real feeds
 
-**Status:** in-progress
+**Status:** built (branch `slice-01-thin-run`, not yet merged)
 **Spec:** [`../spec.md`](../spec.md)
 
 **Value claim:** You will be able to run `topic-radar run ai-engineering` against the real watch and get a plain `report.md` (top stories, quick hits, filtered counts) and a run folder showing every prompt, answer, article and decision, so report quality can be judged before the rest is built. Try it: run with a read cap of 3, open `runs/<time>/report.md`, and check each top story against its `articles/*.md` and `items.csv`; `uv run pytest -m real_model` says how many of T1–T12 the default model gets right.
@@ -114,6 +114,15 @@ Places where building this slice settled something the spec or plan leaves open.
 - **AC15:** quotes are checked against the chunk they came from, as the AC says (`architecture.md` says "the text"). The check also reads Markdown backslash escapes as the plain character.
 - **Primary case:** 4 of the AI engineering watch's 17 seeds are web pages, not feeds (see Real run).
 - **AC50:** the 30-second summary's bullets aren't number-checked; the AC names top-story text only.
+
+## Follow-ups
+
+- DNS rebinding: the fetch guard resolves a name, then httpx resolves it again to connect, so a hostile name could reach a loopback service with a GET. The fix is a network backend that connects to the checked address.
+- A feed's own title is the link text for its source, so a feed can name itself after a trusted source; show the host beside it.
+- The `ollama` address in `settings.yaml` isn't checked to be local (settings slice).
+- The 30-second summary's bullets aren't number-checked.
+- Hacker News quick hits show feed boilerplate as their summary.
+- The T2 rule in the scenario outcomes is stricter than the primary-case table (a combined release that's read and kept fails it).
 
 ## Deferred
 
