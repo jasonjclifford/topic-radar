@@ -10,7 +10,7 @@ import httpx
 from .context import RunContext
 from .model.ollama import OllamaClient, PreflightError
 from .model.recording import RecordingClient
-from .settings import load_settings
+from .settings import SettingsError, load_settings
 from .state import RunState
 from .steps.assemble import assemble
 from .steps.collect import collect
@@ -31,7 +31,7 @@ INTERRUPTED = 130
 class Outcome:
     code: int  # 0 a report was written, 1 an unexpected error, 2 the run could not start, 130 stopped with Ctrl-C
     report: Path | None = None
-    message: str = ""  # for code 2: what to tell the user
+    message: str = ""  # for code 2: what to tell the user; for code 1: where the details went, if it wasn't in the run folder
 
 
 def _find_watch(folder: Path, name: str) -> Path | str:
@@ -47,6 +47,34 @@ def _find_watch(folder: Path, name: str) -> Path | str:
 async def run_watch(watch: str, folder: Path, *, read_cap: int | None = None, model: str | None = None,
                     model_client=None, allow_loopback: bool = False,
                     clock: Callable[[], datetime] | None = None) -> Outcome:
+    """Run one watch (see `_run_watch`); anything unexpected before or around the pipeline ends as code 1 with
+    a plain message, never a traceback on the terminal."""
+    held: dict = {}
+    try:
+        return await _run_watch(watch, folder, held, read_cap=read_cap, model=model, model_client=model_client,
+                                allow_loopback=allow_loopback, clock=clock)
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        raise
+    except Exception:
+        details = traceback.format_exc()
+        run_folder = held.get("run_folder")
+        if run_folder:
+            (run_folder.details / "error.txt").write_text(details, encoding="utf-8")
+            where = "The technical details are in details/error.txt in the run folder."
+        else:
+            where = "No run folder was created, so nothing was saved."
+        if held.get("http"):
+            await held["http"].aclose()
+        if held.get("raw"):
+            try:
+                await held["raw"].unload()
+            except Exception:
+                pass
+        return Outcome(1, message=f"The run stopped because something unexpected went wrong, so there is no report. {where}")
+
+
+async def _run_watch(watch: str, folder: Path, held: dict, *, read_cap: int | None, model: str | None,
+                     model_client, allow_loopback: bool, clock: Callable[[], datetime] | None) -> Outcome:
     """Run one watch from the Topic Radar `folder` and return how it ended.
 
     `model_client` (anything with call, preflight and unload) and `allow_loopback` exist so tests can
@@ -54,7 +82,10 @@ async def run_watch(watch: str, folder: Path, *, read_cap: int | None = None, mo
     never sets them. Nothing is created in `folder` until the watch has loaded and the preflight passed."""
     folder = Path(folder)
     clock = clock or (lambda: datetime.now(timezone.utc))
-    settings = load_settings(folder)
+    try:
+        settings = load_settings(folder)
+    except SettingsError as e:
+        return Outcome(2, message=e.message)
     found = _find_watch(folder, watch)
     if isinstance(found, str):
         return Outcome(2, message=found)
@@ -65,15 +96,16 @@ async def run_watch(watch: str, folder: Path, *, read_cap: int | None = None, mo
     if model_name == "auto":
         model_name = AUTO_MODEL
     settings = replace(settings, model=model_name, **({"read_cap": read_cap} if read_cap is not None else {}))
-    raw = model_client or OllamaClient(settings.ollama, model_name, settings.model_timeout_seconds, settings.context)
+    raw = held["raw"] = model_client or OllamaClient(settings.ollama, model_name, settings.model_timeout_seconds,
+                                                      settings.context)
     try:
         await raw.preflight(model_name)
     except PreflightError as e:
         return Outcome(2, message=e.message)
 
     # trust_env off: a proxy setting must not route around the fetch guard's address check
-    http = httpx.AsyncClient(follow_redirects=False, trust_env=False, timeout=settings.timeout_seconds)
-    run_folder = RunFolder.create(folder, clock)
+    run_folder = held["run_folder"] = RunFolder.create(folder, clock)
+    http = held["http"] = httpx.AsyncClient(follow_redirects=False, trust_env=False, timeout=settings.timeout_seconds)
     ctx = RunContext(settings=settings, watch=loaded, folder=folder, clock=clock, http=http,
                      model=RecordingClient(raw, run_folder), run_folder=run_folder, allow_loopback=allow_loopback)
     outcome = Outcome(0, report=run_folder.path / "report.md")

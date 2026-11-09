@@ -25,7 +25,7 @@ def run(
         outcome = asyncio.run(run_watch(watch, folder, read_cap=read_cap, model=model))
     except KeyboardInterrupt:
         raise typer.Exit(INTERRUPTED) from None
-    if outcome.code == 2:
+    if outcome.code in (1, 2) and outcome.message:
         typer.echo(outcome.message, err=True)
     elif outcome.code == 0:
         typer.echo("The report is ready. To open it, double-click it in Finder or File Explorer, "

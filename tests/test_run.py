@@ -379,3 +379,26 @@ async def test_the_summary_section_is_left_out_when_there_is_no_summary(render):
     item = make_item(decision="top story")
     report = render(state_with(item, written=Written(top=[story_of(item)], summary=None)))
     assert "## In 30 seconds" not in report and "## Top stories" in report
+
+
+def test_a_malformed_settings_file_exits_2_naming_the_file_with_no_traceback_or_run_folder(site, tmp_path, monkeypatch):
+    h = Harness(tmp_path / "radar", site, monkeypatch)
+    (h.folder / "settings.yaml").write_text("model: [unclosed\n")
+    result = h.run()
+    assert result.exit_code == 2
+    assert "settings.yaml" in result.output and "line" in result.output
+    assert "Traceback" not in result.output
+    assert not (h.folder / "runs").exists()
+
+
+def test_an_error_before_the_run_folder_exists_exits_1_with_no_traceback(site, tmp_path, monkeypatch):
+    h = Harness(tmp_path / "radar", site, monkeypatch)
+
+    def boom(*a, **k):
+        raise RuntimeError("disk exploded")
+    monkeypatch.setattr(pipeline.RunFolder, "create", boom)
+    result = h.run()
+    assert result.exit_code == 1
+    assert "Traceback" not in result.output
+    assert "went wrong" in result.output
+    assert h.fake.unloads == 1
