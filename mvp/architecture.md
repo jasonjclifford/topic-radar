@@ -114,7 +114,7 @@ Each later stage plugs in at one of these without changing the others:
 
 | Seam | MVP | Later |
 |---|---|---|
-| `Reader` protocol (`discover(seed)`, `collect(source, cursor, since)`) | `feed` | `sitemap`, `listing`, `document`, `search` (Playwright), all returning the same `Item` and cursor |
+| `Reader` protocol (`discover(seed)`, `collect(source, cursor, since)`) | `feed` | `sitemap` and static `listing` over plain HTTP (stage 1b); `document`, `search` and JavaScript `listing` (Playwright), all returning the same `Item` and cursor |
 | The step list | 9 steps | `prefilter` (embeddings) between `normalize` and `triage`; `discover_sources` after `read`; `dates` and `trends` before `rank` |
 | `ModelClient` | Ollama, scripted | a separate writing model; the `embed` call for embeddings |
 | `store/` | the only code that touches state files | the console reads and writes through it too, so its rules (atomic writes, end-of-run changes) hold for every interface |

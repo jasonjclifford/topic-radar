@@ -26,7 +26,7 @@ I use coding agents every day (Claude Code, GitHub Copilot in VS Code, Devin) an
 
 ## Sources
 
-The seeds in the watch file are starting points. `topic-radar init` confirms which have feeds; those without a feed are reported as "no feed found" and wait for stage 2, which reads listing pages through the browser.
+The seeds in the watch file are starting points. `topic-radar init` confirms which have feeds; those without a feed are reported as "no feed found" and wait for stage 1b, which reads sitemaps and static listing pages over plain HTTP ([`../ROADMAP.md`](../ROADMAP.md)).
 
 **Checked on 2026-11-09:** Anthropic news, Anthropic engineering and the Devin blog have no feed, so in the MVP 3 of the 6 coding-agent seeds are missing. The cost is real: a pricing or plan-limit change (T3) reaches the MVP only second-hand, through Simon Willison or Hacker News, usually a day or two later. The LangChain blog's feed exists but isn't linked from the blog page, so the watch seeds the feed's address directly. All other seeds return a feed.
 

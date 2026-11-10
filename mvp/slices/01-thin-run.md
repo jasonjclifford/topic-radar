@@ -1,6 +1,6 @@
 # Slice 1 — one thin run, start to finish, on real feeds
 
-**Status:** built (branch `slice-01-thin-run`, not yet merged)
+**Status:** built and merged into `main`
 **Spec:** [`../spec.md`](../spec.md)
 
 **Value claim:** You will be able to run `topic-radar run ai-engineering` against the real watch and get a plain `report.md` (top stories, quick hits, filtered counts) and a run folder showing every prompt, answer, article and decision, so report quality can be judged before the rest is built. Try it: run with a read cap of 3, open `runs/<time>/report.md`, and check each top story against its `articles/*.md` and `items.csv`; `uv run pytest -m real_model` says how many of T1–T12 the default model gets right.

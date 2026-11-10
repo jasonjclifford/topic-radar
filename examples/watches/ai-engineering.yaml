@@ -45,11 +45,11 @@ already_know: |
 seeds:
   # Coding agents
   - https://github.com/anthropics/claude-code/releases.atom      # Claude Code releases
-  - https://www.anthropic.com/engineering                         # Anthropic engineering posts (no feed: waits for stage 2)
-  - https://www.anthropic.com/news                                # Anthropic news, models and pricing (no feed: waits for stage 2)
+  - https://www.anthropic.com/engineering                         # Anthropic engineering posts (no feed; has a sitemap: waits for stage 1b)
+  - https://www.anthropic.com/news                                # Anthropic news, models and pricing (no feed; has a sitemap: waits for stage 1b)
   - https://github.blog/changelog/label/copilot/                  # GitHub Copilot changes
   - https://code.visualstudio.com/feed.xml                        # VS Code updates (Copilot in the editor)
-  - https://cognition.ai/blog                                     # Devin (no feed: waits for stage 2)
+  - https://cognition.ai/blog                                     # Devin (no feed; has a sitemap: waits for stage 1b)
   # Building with models
   - https://github.com/langchain-ai/langgraph/releases.atom       # LangGraph releases
   - https://www.langchain.com/blog/rss.xml                        # LangChain and LangGraph posts (the feed exists but the blog page doesn't link it)
